@@ -25,8 +25,13 @@ internal sealed class OverlayWindow : IDisposable
     public int ClientHeight { get; private set; } = DefaultClientHeight;
 
     private bool _isVisible = false;
-    private bool _forcePassThrough = false;        // still here for future use
+    private bool _forcePassThrough = false;
     private RECT[] _hitRegions = Array.Empty<RECT>(); // client-space rects
+
+    // Hit test values for WM_NCHITTEST return
+    private const int HTCLIENT = 1;
+    private const int HTTRANSPARENT = -1;
+
 
     public bool Visible
     {
@@ -58,7 +63,8 @@ internal sealed class OverlayWindow : IDisposable
                 };
                 PInvoke.RegisterClassEx(wc);
 
-                // IMPORTANT: WS_EX_TRANSPARENT makes the window hit-test transparent.
+                // WS_EX_TRANSPARENT alone does NOT make the window click-through.
+                // We implement selective pass-through via WM_NCHITTEST instead.
                 var ex = WINDOW_EX_STYLE.WS_EX_TOOLWINDOW
                           | WINDOW_EX_STYLE.WS_EX_NOACTIVATE
                           | WINDOW_EX_STYLE.WS_EX_TRANSPARENT;
@@ -98,7 +104,8 @@ internal sealed class OverlayWindow : IDisposable
     }
 
     /// <summary>
-    /// Update the interactive regions (client coords). Kept for future hook-based input.
+    /// Update the interactive regions (client coords).
+    /// Called by HitTestRegions.ApplyToOverlay once per frame.
     /// </summary>
     public void SetHitTestRegions(ReadOnlySpan<RECT> regions)
     {
@@ -136,13 +143,40 @@ internal sealed class OverlayWindow : IDisposable
     {
         switch (msg)
         {
-            // NOTE: No WM_NCHITTEST handler anymore – WS_EX_TRANSPARENT
-            // makes the whole window hit-test transparent by default.
+            case PInvoke.WM_NCHITTEST:
+            {
+                // Optional global “everything passes through” toggle.
+                if (_forcePassThrough)
+                    return (LRESULT)(nint)HTTRANSPARENT;
+
+                // Extract screen coordinates from lParam
+                long v = (long)lParam.Value;
+                int x = (short)(v & 0xFFFF);
+                int y = (short)((v >> 16) & 0xFFFF);
+
+                var ptScreen = new Point(x, y);
+                var ptClient = ptScreen;
+                PInvoke.ScreenToClient(hwnd, ref ptClient);
+
+                // Check if the point is inside any ImGui-defined hit region
+                foreach (var r in _hitRegions)
+                {
+                    if (ptClient.X >= r.left && ptClient.X < r.right &&
+                        ptClient.Y >= r.top && ptClient.Y < r.bottom)
+                    {
+                        // This area is handled by the overlay / ImGui
+                        return (LRESULT)(nint)HTCLIENT;
+                    }
+                }
+
+                // Everywhere else: let the click pass through to the window behind
+                return (LRESULT)(nint)HTTRANSPARENT;
+            }
 
             case PInvoke.WM_MOUSEWHEEL:
             {
-                // This will rarely fire with WS_EX_TRANSPARENT, but we keep it
-                // in case we later change styles or add a non-transparent input window.
+                // This may rarely fire depending on styles, but we keep it
+                // in case we later adjust window flags.
                 int delta = (short)((ulong)wParam.Value >> 16);
                 float steps = delta / 120.0f;
                 ImGuiInput.AddMouseWheelDelta(steps);

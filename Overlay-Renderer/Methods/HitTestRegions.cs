@@ -54,27 +54,25 @@ namespace Overlay_Renderer.Methods
         ///</summary>
         public static void ApplyToOverlay(OverlayWindow overlay)
         {
-            //if (_regions.Count == 0)
-            //{
-            //    overlay.SetHitTestRegions(ReadOnlySpan<RECT>.Empty);
-            //    return;
-            //}
-            //
-            //// Clamp rects to overlay client size
-            //for (int i = 0; i < _regions.Count; i++)
-            //{
-            //    var r = _regions[i];
-            //    r.left = Math.Max(0, r.left);
-            //    r.top = Math.Max(0, r.top);
-            //    r.right = Math.Min(overlay.ClientWidth, r.right);
-            //    r.bottom = Math.Min(overlay.ClientHeight, r.bottom);
-            //    _regions[i] = r;
-            //}
-            //
-            //var span = CollectionsMarshal.AsSpan(_regions);
-            //overlay.SetHitTestRegions(span);
-
-            overlay.SetHitTestRegions(ReadOnlySpan<RECT>.Empty);
+            if (_regions.Count == 0)
+            {
+                overlay.SetHitTestRegions(ReadOnlySpan<RECT>.Empty);
+                return;
+            }
+            
+            // Clamp rects to overlay client size
+            for (int i = 0; i < _regions.Count; i++)
+            {
+                var r = _regions[i];
+                r.left = Math.Max(0, r.left);
+                r.top = Math.Max(0, r.top);
+                r.right = Math.Min(overlay.ClientWidth, r.right);
+                r.bottom = Math.Min(overlay.ClientHeight, r.bottom);
+                _regions[i] = r;
+            }
+            
+            var span = CollectionsMarshal.AsSpan(_regions);
+            overlay.SetHitTestRegions(span);
         }
     }
 }

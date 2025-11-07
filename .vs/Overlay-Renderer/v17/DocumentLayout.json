@@ -3,20 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\Rayla\\Documents\\Visual Studio Projects\\Overlay-Renderer\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{18B0D40D-BCAA-40D3-9C8A-CF5022A63E8F}|Overlay-Renderer\\Overlay-Renderer.csproj|c:\\users\\rayla\\documents\\visual studio projects\\overlay-renderer\\overlay-renderer\\methods\\hittestregions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{18B0D40D-BCAA-40D3-9C8A-CF5022A63E8F}|Overlay-Renderer\\Overlay-Renderer.csproj|solutionrelative:overlay-renderer\\methods\\hittestregions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{18B0D40D-BCAA-40D3-9C8A-CF5022A63E8F}|Overlay-Renderer\\Overlay-Renderer.csproj|c:\\users\\rayla\\documents\\visual studio projects\\overlay-renderer\\overlay-renderer\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{18B0D40D-BCAA-40D3-9C8A-CF5022A63E8F}|Overlay-Renderer\\Overlay-Renderer.csproj|solutionrelative:overlay-renderer\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{18B0D40D-BCAA-40D3-9C8A-CF5022A63E8F}|Overlay-Renderer\\Overlay-Renderer.csproj|c:\\users\\rayla\\documents\\visual studio projects\\overlay-renderer\\overlay-renderer\\overlaywindow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{18B0D40D-BCAA-40D3-9C8A-CF5022A63E8F}|Overlay-Renderer\\Overlay-Renderer.csproj|solutionrelative:overlay-renderer\\overlaywindow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{18B0D40D-BCAA-40D3-9C8A-CF5022A63E8F}|Overlay-Renderer\\Overlay-Renderer.csproj|c:\\users\\rayla\\documents\\visual studio projects\\overlay-renderer\\overlay-renderer\\nativemethods.txt||{8B382828-6202-11D1-8870-0000F87579D2}",
       "RelativeMoniker": "D:0:0:{18B0D40D-BCAA-40D3-9C8A-CF5022A63E8F}|Overlay-Renderer\\Overlay-Renderer.csproj|solutionrelative:overlay-renderer\\nativemethods.txt||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{18B0D40D-BCAA-40D3-9C8A-CF5022A63E8F}|Overlay-Renderer\\Overlay-Renderer.csproj|c:\\users\\rayla\\documents\\visual studio projects\\overlay-renderer\\overlay-renderer\\methods\\hittestregions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{18B0D40D-BCAA-40D3-9C8A-CF5022A63E8F}|Overlay-Renderer\\Overlay-Renderer.csproj|solutionrelative:overlay-renderer\\methods\\hittestregions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{18B0D40D-BCAA-40D3-9C8A-CF5022A63E8F}|Overlay-Renderer\\Overlay-Renderer.csproj|c:\\users\\rayla\\documents\\visual studio projects\\overlay-renderer\\overlay-renderer\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{18B0D40D-BCAA-40D3-9C8A-CF5022A63E8F}|Overlay-Renderer\\Overlay-Renderer.csproj|solutionrelative:overlay-renderer\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{18B0D40D-BCAA-40D3-9C8A-CF5022A63E8F}|Overlay-Renderer\\Overlay-Renderer.csproj|c:\\users\\rayla\\documents\\visual studio projects\\overlay-renderer\\overlay-renderer\\d3dhost.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -61,7 +61,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
@@ -77,26 +77,26 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 0,
               "Title": "OverlayWindow.cs",
               "DocumentMoniker": "C:\\Users\\Rayla\\Documents\\Visual Studio Projects\\Overlay-Renderer\\Overlay-Renderer\\OverlayWindow.cs",
               "RelativeDocumentMoniker": "Overlay-Renderer\\OverlayWindow.cs",
               "ToolTip": "C:\\Users\\Rayla\\Documents\\Visual Studio Projects\\Overlay-Renderer\\Overlay-Renderer\\OverlayWindow.cs",
               "RelativeToolTip": "Overlay-Renderer\\OverlayWindow.cs",
-              "ViewState": "AgIAAG8AAAAAAAAAAAAAAIYAAABOAAAAAAAAAA==",
+              "ViewState": "AgIAAIEAAAAAAAAAAAAAAKoAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-11-06T23:04:40.97Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
               "Title": "HitTestRegions.cs",
               "DocumentMoniker": "C:\\Users\\Rayla\\Documents\\Visual Studio Projects\\Overlay-Renderer\\Overlay-Renderer\\Methods\\HitTestRegions.cs",
               "RelativeDocumentMoniker": "Overlay-Renderer\\Methods\\HitTestRegions.cs",
               "ToolTip": "C:\\Users\\Rayla\\Documents\\Visual Studio Projects\\Overlay-Renderer\\Overlay-Renderer\\Methods\\HitTestRegions.cs",
               "RelativeToolTip": "Overlay-Renderer\\Methods\\HitTestRegions.cs",
-              "ViewState": "AgIAAB4AAAAAAAAAAAAUwEwAAABAAAAAAAAAAA==",
+              "ViewState": "AgIAAB4AAAAAAAAAAAAUwEYAAAAgAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-11-06T22:49:25.423Z",
               "EditorCaption": ""
@@ -127,7 +127,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 3,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\Rayla\\Documents\\Visual Studio Projects\\Overlay-Renderer\\Overlay-Renderer\\Program.cs",
               "RelativeDocumentMoniker": "Overlay-Renderer\\Program.cs",
@@ -135,18 +135,17 @@
               "RelativeToolTip": "Overlay-Renderer\\Program.cs",
               "ViewState": "AgIAAC0AAAAAAAAAAAAAAE4AAAATAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-06T20:35:18.356Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-06T20:35:18.356Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 1,
               "Title": "NativeMethods.txt",
               "DocumentMoniker": "C:\\Users\\Rayla\\Documents\\Visual Studio Projects\\Overlay-Renderer\\Overlay-Renderer\\NativeMethods.txt",
               "RelativeDocumentMoniker": "Overlay-Renderer\\NativeMethods.txt",
               "ToolTip": "C:\\Users\\Rayla\\Documents\\Visual Studio Projects\\Overlay-Renderer\\Overlay-Renderer\\NativeMethods.txt",
               "RelativeToolTip": "Overlay-Renderer\\NativeMethods.txt",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAD8AAAAPAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003109|",
               "WhenOpened": "2025-11-06T22:12:34.02Z",
               "EditorCaption": ""
