@@ -1,0 +1,31 @@
+{
+  "version": 2,
+  "dgSpecHash": "JHsxPySaUXk=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Rayla\\Documents\\Visual Studio Projects\\Overlay-Renderer\\Overlay-Renderer\\Overlay-Renderer.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Rayla\\.nuget\\packages\\imgui.net\\1.91.6.1\\imgui.net.1.91.6.1.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\microsoft.win32.systemevents\\9.0.10\\microsoft.win32.systemevents.9.0.10.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\microsoft.windows.cswin32\\0.3.242\\microsoft.windows.cswin32.0.3.242.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\microsoft.windows.sdk.win32docs\\0.1.42-alpha\\microsoft.windows.sdk.win32docs.0.1.42-alpha.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\microsoft.windows.sdk.win32metadata\\65.0.8-preview\\microsoft.windows.sdk.win32metadata.65.0.8-preview.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\microsoft.windows.wdk.win32metadata\\0.13.25-experimental\\microsoft.windows.wdk.win32metadata.0.13.25-experimental.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\opencvsharp4\\4.11.0.20250507\\opencvsharp4.4.11.0.20250507.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\opencvsharp4.runtime.win\\4.11.0.20250507\\opencvsharp4.runtime.win.4.11.0.20250507.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\sharpgen.runtime\\2.2.0-beta\\sharpgen.runtime.2.2.0-beta.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\sharpgen.runtime.com\\2.2.0-beta\\sharpgen.runtime.com.2.2.0-beta.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\system.buffers\\4.5.1\\system.buffers.4.5.1.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\system.drawing.common\\9.0.10\\system.drawing.common.9.0.10.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\system.memory\\4.6.3\\system.memory.4.6.3.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\system.numerics.vectors\\4.5.0\\system.numerics.vectors.4.5.0.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\6.1.2\\system.runtime.compilerservices.unsafe.6.1.2.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\vortice.d3dcompiler\\3.6.2\\vortice.d3dcompiler.3.6.2.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\vortice.direct2d1\\3.6.2\\vortice.direct2d1.3.6.2.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\vortice.direct3d11\\3.6.2\\vortice.direct3d11.3.6.2.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\vortice.directcomposition\\3.6.2\\vortice.directcomposition.3.6.2.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\vortice.directx\\3.6.2\\vortice.directx.3.6.2.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\vortice.dxgi\\3.6.2\\vortice.dxgi.3.6.2.nupkg.sha512",
+    "C:\\Users\\Rayla\\.nuget\\packages\\vortice.mathematics\\1.9.2\\vortice.mathematics.1.9.2.nupkg.sha512"
+  ],
+  "logs": []
+}
