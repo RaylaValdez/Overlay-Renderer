@@ -7,6 +7,7 @@ using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Dwm;
 using Windows.Win32.UI.WindowsAndMessaging;
 using Overlay_Renderer;
+using Windows.Win32.Graphics.Gdi;
 
 namespace Overlay_Renderer;
 
@@ -21,6 +22,18 @@ internal sealed class OverlayWindow : IDisposable
     private const int HTNOWHERE = 0;
     private const int HTCLIENT = 1;
     private const int HTTRANSPARENT = -1;
+
+    // GDI region ops for shaping the window
+    private const int RGN_OR = 2;
+
+    [DllImport("gdi32.dll")]
+    private static extern IntPtr CreateRectRgn(int left, int top, int right, int bottom);
+
+    [DllImport("gdi32.dll")]
+    private static extern int CombineRgn(IntPtr hrgnDest, IntPtr hrgnSrc1, IntPtr hrgnSrc2, int fnCombineMode);
+
+    [DllImport("gdi32.dll")]
+    private static extern bool DeleteObject(IntPtr hObject);
 
     // Mouse activate result constants
     private const int MA_ACTIVATE = 1;
@@ -40,6 +53,9 @@ internal sealed class OverlayWindow : IDisposable
 
     // ImGui hit rectangles in client coordinates
     private RECT[] _hitRegions = Array.Empty<RECT>();
+
+    // Native window region handle (for shaping)
+    private IntPtr _windowRegion = IntPtr.Zero;
 
     public bool Visible
     {
@@ -120,6 +136,41 @@ internal sealed class OverlayWindow : IDisposable
     public void SetHitTestRegions(ReadOnlySpan<RECT> regions)
     {
         _hitRegions = regions.ToArray();
+
+        if (_hitRegions.Length == 0)
+        {
+            PInvoke.SetWindowRgn(Hwnd, (Windows.Win32.Graphics.Gdi.HRGN)IntPtr.Zero, true);
+            return;
+        }
+
+        IntPtr unionRgn = IntPtr.Zero;
+
+        for (int i = 0; i < _hitRegions.Length; i++)
+        {
+            var r = _hitRegions[i];
+            IntPtr rectRgn = CreateRectRgn(r.left, r.top, r.right, r.bottom);
+            if (rectRgn == IntPtr.Zero)
+                continue;
+
+            if (unionRgn == IntPtr.Zero)
+            {
+                unionRgn = rectRgn;
+            }
+            else
+            {
+                CombineRgn(unionRgn, unionRgn, rectRgn, RGN_OR);
+                DeleteObject(rectRgn);
+            }
+        }
+
+        if (unionRgn != IntPtr.Zero)
+        {
+            PInvoke.SetWindowRgn(Hwnd, (Windows.Win32.Graphics.Gdi.HRGN)unionRgn, true);
+        }
+        else
+        {
+            PInvoke.SetWindowRgn(Hwnd, (Windows.Win32.Graphics.Gdi.HRGN)IntPtr.Zero, true);
+        }
     }
 
     /// <summary>
@@ -162,32 +213,10 @@ internal sealed class OverlayWindow : IDisposable
 
             case PInvoke.WM_NCHITTEST:
             {
-                // Global override: everything passes through
                 if (_forcePassThrough)
                     return new LRESULT(HTTRANSPARENT);
 
-                // Extract screen coordinates from lParam
-                long v = (long)lParam.Value;
-                int x = (short)(v & 0xFFFF);
-                int y = (short)((v >> 16) & 0xFFFF);
-
-                var ptScreen = new Point(x, y);
-                var ptClient = ptScreen;
-                PInvoke.ScreenToClient(hwnd, ref ptClient);
-
-                // Check if the point is inside any ImGui-defined hit region
-                foreach (var r in _hitRegions)
-                {
-                    if (ptClient.X >= r.left && ptClient.X < r.right &&
-                        ptClient.Y >= r.top && ptClient.Y < r.bottom)
-                    {
-                        // This area is handled by the overlay / ImGui
-                        return new LRESULT(HTCLIENT);
-                    }
-                }
-
-                // Everywhere else: let the click pass through to the window behind
-                return new LRESULT(HTTRANSPARENT);
+                return new LRESULT(HTCLIENT);
             }
 
             case PInvoke.WM_MOUSEWHEEL:

@@ -1,14 +1,11 @@
-﻿using System;
-using System.Threading;
-using ImGuiNET;
-using System.Linq;
+﻿using ImGuiNET;
+using System.Numerics;
 using Overlay_Renderer.Helpers;
 using Overlay_Renderer.ImGuiRenderer;
 using Overlay_Renderer.Methods;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.WindowsAndMessaging;
-using Overlay_Renderer;
 
 
 namespace Overlay_Renderer
@@ -23,7 +20,7 @@ namespace Overlay_Renderer
             // Get process name: arg0 or ask user
             string processName;
             if (args.Length > 0)
-            { 
+            {
                 processName = args[0].Trim();
             }
             else
@@ -41,7 +38,7 @@ namespace Overlay_Renderer
             Logger.Info($"Waiting for main window of process '{processName}'...");
             var hwndIntPtr = FindProcess.WaitForMainWindow(processName, retries: 20, delayMs: 500);
 
-            if (hwndIntPtr ==  IntPtr.Zero)
+            if (hwndIntPtr == IntPtr.Zero)
             {
                 Logger.Error($"Could not find main window for process '{processName}'. Exiting.");
                 return;
@@ -55,6 +52,11 @@ namespace Overlay_Renderer
 
             using var overlay = new OverlayWindow(targetHwnd);
             overlay.Visible = false;
+
+            if (!targetHwnd.IsNull && PInvoke.IsWindow(targetHwnd))
+            {
+                PInvoke.SetForegroundWindow(targetHwnd);
+            }
 
             using var d3dHost = new D3DHost(overlay.Hwnd);
             using var imguiRenderer = new ImGuiRendererD3D11(d3dHost.Device, d3dHost.Context);
@@ -93,7 +95,7 @@ namespace Overlay_Renderer
             CancellationTokenSource cts)
         {
             MSG msg;
-            
+
             while (!cts.IsCancellationRequested)
             {
                 // Pump Win32 messages
@@ -136,6 +138,17 @@ namespace Overlay_Renderer
 
         private static void DrawDemoUi()
         {
+            var io = ImGui.GetIO();
+            var bg = ImGui.GetBackgroundDrawList();
+
+            uint tintColor = ImGui.ColorConvertFloat4ToU32(new Vector4(0f, 0f, 0f, 0.35f));
+
+            bg.AddRectFilled(
+                new Vector2(0, 0),
+                io.DisplaySize,
+                tintColor
+            );
+
             ImGui.Begin("Overlay Demo");
             HitTestRegions.AddCurrentWindow();
 
