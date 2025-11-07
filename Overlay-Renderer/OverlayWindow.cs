@@ -17,6 +17,15 @@ internal sealed class OverlayWindow : IDisposable
     private const int DefaultClientHeight = 720;
     private const uint DwmBlurEnableFlag = 0x1u;
 
+    // Hit-test result constants (from WinUser.h)
+    private const int HTNOWHERE = 0;
+    private const int HTCLIENT = 1;
+    private const int HTTRANSPARENT = -1;
+
+    // Mouse activate result constants
+    private const int MA_ACTIVATE = 1;
+    private const int MA_NOACTIVATE = 3;
+
     private readonly HWND _ownerHwnd;
     private WNDPROC _wndProcThunk;
     public readonly HWND Hwnd;
@@ -25,13 +34,12 @@ internal sealed class OverlayWindow : IDisposable
     public int ClientHeight { get; private set; } = DefaultClientHeight;
 
     private bool _isVisible = false;
+
+    // Global override to force full pass-through (if you ever want a hotkey)
     private bool _forcePassThrough = false;
-    private RECT[] _hitRegions = Array.Empty<RECT>(); // client-space rects
 
-    // Hit test values for WM_NCHITTEST return
-    private const int HTCLIENT = 1;
-    private const int HTTRANSPARENT = -1;
-
+    // ImGui hit rectangles in client coordinates
+    private RECT[] _hitRegions = Array.Empty<RECT>();
 
     public bool Visible
     {
@@ -63,11 +71,13 @@ internal sealed class OverlayWindow : IDisposable
                 };
                 PInvoke.RegisterClassEx(wc);
 
-                // WS_EX_TRANSPARENT alone does NOT make the window click-through.
-                // We implement selective pass-through via WM_NCHITTEST instead.
+                // NOTE:
+                //  - WS_EX_NOACTIVATE: never becomes the active/focused window
+                //  - WS_EX_TOOLWINDOW: hides from Alt-Tab
+                //  - NO WS_EX_TRANSPARENT here; we do fine-grained pass-through via WM_NCHITTEST.
                 var ex = WINDOW_EX_STYLE.WS_EX_TOOLWINDOW
-                          | WINDOW_EX_STYLE.WS_EX_NOACTIVATE
-                          | WINDOW_EX_STYLE.WS_EX_TRANSPARENT;
+                          | WINDOW_EX_STYLE.WS_EX_NOACTIVATE;
+
                 var style = WINDOW_STYLE.WS_POPUP;
 
                 Hwnd = PInvoke.CreateWindowEx(
@@ -86,7 +96,7 @@ internal sealed class OverlayWindow : IDisposable
             }
         }
 
-        // Disable DWM blur
+        // Disable DWM blur (just in case)
         unsafe
         {
             var bb = new DWM_BLURBEHIND
@@ -143,11 +153,18 @@ internal sealed class OverlayWindow : IDisposable
     {
         switch (msg)
         {
+            // Prevent activation even if Windows tries
+            case PInvoke.WM_MOUSEACTIVATE:
+            {
+                // MA_NOACTIVATE: don't activate this window, but still allow the click
+                return new LRESULT(MA_NOACTIVATE);
+            }
+
             case PInvoke.WM_NCHITTEST:
             {
-                // Optional global “everything passes through” toggle.
+                // Global override: everything passes through
                 if (_forcePassThrough)
-                    return (LRESULT)(nint)HTTRANSPARENT;
+                    return new LRESULT(HTTRANSPARENT);
 
                 // Extract screen coordinates from lParam
                 long v = (long)lParam.Value;
@@ -165,22 +182,20 @@ internal sealed class OverlayWindow : IDisposable
                         ptClient.Y >= r.top && ptClient.Y < r.bottom)
                     {
                         // This area is handled by the overlay / ImGui
-                        return (LRESULT)(nint)HTCLIENT;
+                        return new LRESULT(HTCLIENT);
                     }
                 }
 
                 // Everywhere else: let the click pass through to the window behind
-                return (LRESULT)(nint)HTTRANSPARENT;
+                return new LRESULT(HTTRANSPARENT);
             }
 
             case PInvoke.WM_MOUSEWHEEL:
             {
-                // This may rarely fire depending on styles, but we keep it
-                // in case we later adjust window flags.
                 int delta = (short)((ulong)wParam.Value >> 16);
                 float steps = delta / 120.0f;
                 ImGuiInput.AddMouseWheelDelta(steps);
-                return (LRESULT)0;
+                return new LRESULT(0);
             }
 
             case PInvoke.WM_MOUSEHWHEEL:
@@ -188,7 +203,7 @@ internal sealed class OverlayWindow : IDisposable
                 int delta = (short)((ulong)wParam.Value >> 16);
                 float steps = delta / 120.0f;
                 ImGuiInput.AddMouseWheelDelta(0f, steps);
-                return (LRESULT)0;
+                return new LRESULT(0);
             }
 
             case PInvoke.WM_DESTROY:

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Overlay-Renderer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+480e29ef4e7b7325a74181d7e556a10d9cb47133")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+99642128fbd4ddc26ee209700f43f47110755d2e")]
 [assembly: System.Reflection.AssemblyProductAttribute("Overlay-Renderer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Overlay-Renderer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
