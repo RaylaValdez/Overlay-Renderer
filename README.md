@@ -174,7 +174,7 @@ See **[Starboard](https://github.com/RaylaValdez/Starboard)** for a real-world i
 
 ## ⚖️ License
 
-MIT License — you’re free to use, modify, and distribute.
+Apache-2.0 License — you’re free to use, modify, and distribute.
 
 ---
 
