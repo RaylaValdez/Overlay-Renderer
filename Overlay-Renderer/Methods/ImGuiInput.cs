@@ -2,14 +2,29 @@
 using System.Numerics;
 using ImGuiNET;
 using Windows.Win32;
-using Windows.Win32.Foundation;
 using Windows.Win32.UI.Input.KeyboardAndMouse;
-using Overlay_Renderer;
+using System.Runtime.InteropServices;
 
 namespace Overlay_Renderer.Methods
 {
-    internal class ImGuiInput
+    public static class ImGuiInput
     {
+        [DllImport("user32.dll", EntryPoint = "LoadCursor", CharSet = CharSet.Unicode)]
+        private static extern IntPtr LoadCursor(IntPtr hInstance, int lpCursorName);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SetCursor(IntPtr hCursor);
+
+        // Standard Cursor ID's
+        private const int IDC_ARROW = 32512;
+        private const int IDC_IBEAM = 32513;
+        private const int IDC_HAND = 32649;
+        private const int IDC_SIZEALL = 32646;
+        private const int IDC_SIZENWSE = 32642;
+        private const int IDC_SIZENESW = 32643;
+        private const int IDC_SIZENS = 32645;
+        private const int IDC_SIZEWE = 32644;
+
         // Mouse Wheel State (per frame)
         private static float _pendingWheelY;
         private static float _pendingWheelX;
@@ -163,5 +178,75 @@ namespace Overlay_Renderer.Methods
             _pendingWheelY = deltaY;
             _pendingWheelX = deltaX;
         }
+
+        ///<summary>
+        ///Update the OS cursor to match ImGui's requested cursor,
+        ///Call this from WM_SETCURSOR in the overlay window
+        ///</summary>
+        public static void UpdateMouseCursor()
+        {
+            var io = ImGui.GetIO();
+
+            if ((io.ConfigFlags & ImGuiConfigFlags.NoMouseCursorChange) != 0)
+                return;
+
+            var imguiCursor = ImGui.GetMouseCursor();
+
+            if (imguiCursor == ImGuiMouseCursor.None || io.MouseDrawCursor)
+            {
+                SetCursor(IntPtr.Zero);
+                return;
+            }
+
+            IntPtr hCursor = IntPtr.Zero;
+
+            switch (imguiCursor)
+            {
+                default:
+                case ImGuiMouseCursor.Arrow:
+                    hCursor = LoadCursor(IntPtr.Zero, IDC_ARROW);
+                    break;
+
+                case ImGuiMouseCursor.TextInput:
+                    hCursor = LoadCursor(IntPtr.Zero, IDC_IBEAM);
+                    break;
+
+                case ImGuiMouseCursor.ResizeAll:
+                    hCursor = LoadCursor(IntPtr.Zero, IDC_SIZEALL);
+                    break;
+
+                case ImGuiMouseCursor.ResizeNS:
+                    hCursor = LoadCursor(IntPtr.Zero, IDC_SIZENS);
+                    break;
+
+                case ImGuiMouseCursor.ResizeEW:
+                    hCursor = LoadCursor(IntPtr.Zero, IDC_SIZEWE);
+                    break;
+
+                case ImGuiMouseCursor.ResizeNESW:
+                    hCursor = LoadCursor(IntPtr.Zero, IDC_SIZENESW);
+                    break;
+
+                case ImGuiMouseCursor.ResizeNWSE:
+                    hCursor = LoadCursor(IntPtr.Zero, IDC_SIZENWSE);
+                    break;
+
+                case ImGuiMouseCursor.Hand:
+                    hCursor = LoadCursor(IntPtr.Zero, IDC_HAND);
+                    break;
+
+                case ImGuiMouseCursor.NotAllowed:
+                    // No perfect stock cursor; arrow is usually fine, or you can pick something else.
+                    hCursor = LoadCursor(IntPtr.Zero, IDC_ARROW);
+                    break;
+            }
+
+            if (hCursor != IntPtr.Zero)
+            {
+                SetCursor(hCursor);
+            }
+        }
+
+
     }
 }

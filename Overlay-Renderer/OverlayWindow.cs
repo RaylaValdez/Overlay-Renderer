@@ -11,7 +11,7 @@ using Windows.Win32.Graphics.Gdi;
 
 namespace Overlay_Renderer;
 
-internal sealed class OverlayWindow : IDisposable
+public sealed class OverlayWindow : IDisposable
 {
     private const string WindowClassName = "OverlayRendererOverlayWindowClass";
     private const int DefaultClientWidth = 1280;
@@ -237,6 +237,16 @@ internal sealed class OverlayWindow : IDisposable
 
             case PInvoke.WM_DESTROY:
                 PInvoke.PostQuitMessage(0);
+                break;
+
+            case PInvoke.WM_SETCURSOR:
+                int hitTest = (short)((ulong)lParam.Value & 0xFFFF);
+
+                if (hitTest == HTCLIENT)
+                {
+                    ImGuiInput.UpdateMouseCursor();
+                    return new LRESULT(1);
+                }
                 break;
         }
 

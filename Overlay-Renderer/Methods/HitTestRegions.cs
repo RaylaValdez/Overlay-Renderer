@@ -7,7 +7,7 @@ using Overlay_Renderer;
 
 namespace Overlay_Renderer.Methods
 {
-    internal static class HitTestRegions
+    public static class HitTestRegions
     {
         private static readonly List<RECT> _regions = new();
 

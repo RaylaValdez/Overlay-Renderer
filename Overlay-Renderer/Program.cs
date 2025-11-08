@@ -61,6 +61,8 @@ namespace Overlay_Renderer
             using var d3dHost = new D3DHost(overlay.Hwnd);
             using var imguiRenderer = new ImGuiRendererD3D11(d3dHost.Device, d3dHost.Context);
 
+            ImGuiStylePresets.ApplyDark();
+
             var cts = new CancellationTokenSource();
 
             // Track target window, keeping overlay aligned and resizing when needed.
@@ -143,13 +145,14 @@ namespace Overlay_Renderer
 
             uint tintColor = ImGui.ColorConvertFloat4ToU32(new Vector4(0f, 0f, 0f, 0.35f));
 
-            bg.AddRectFilled(
-                new Vector2(0, 0),
-                io.DisplaySize,
-                tintColor
-            );
+            //bg.AddRectFilled(
+            //    new Vector2(0, 0),
+            //    io.DisplaySize,
+            //    tintColor
+            //);
 
             ImGui.Begin("Overlay Demo");
+            ImGui.SetWindowPos(new Vector2(10, 10), ImGuiCond.Once);
             HitTestRegions.AddCurrentWindow();
 
             ImGui.Text("Hello from Overlay-Renderer!");

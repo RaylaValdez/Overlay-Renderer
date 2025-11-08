@@ -16,7 +16,7 @@ using Overlay_Renderer;
 
 namespace Overlay_Renderer.ImGuiRenderer;
 
-internal sealed class ImGuiRendererD3D11 : IDisposable
+public sealed class ImGuiRendererD3D11 : IDisposable
 {
     private const int InitialVertexCapacity = 5000;
     private const int InitialIndexCapacity = 10000;

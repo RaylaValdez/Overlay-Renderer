@@ -6,7 +6,7 @@ using Overlay_Renderer;
 
 namespace Overlay_Renderer.Methods
 {
-    internal static class FindProcess
+    public static class FindProcess
     {
         public static IntPtr TryFindMainWindow(string processName)
         {

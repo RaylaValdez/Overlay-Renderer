@@ -7,7 +7,7 @@ using Overlay_Renderer;
 
 namespace Overlay_Renderer.Helpers
 {
-    internal static class Logger
+    public static class Logger
     {
         private static readonly object _lock = new();
         private static StreamWriter? _logFile;

@@ -9,7 +9,7 @@ using Overlay_Renderer;
 
 namespace Overlay_Renderer.Methods
 {
-    internal class WindowTracker
+    public static class WindowTracker
     {
         public static Task StartTrackingAsync(
             HWND targetHwnd,

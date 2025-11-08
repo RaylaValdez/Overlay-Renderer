@@ -17,7 +17,7 @@ namespace Overlay_Renderer;
 /// This renders a premultiplied-alpha surface and hands it to DirectComposition so the
 /// overlay can be fully transparent except where we draw.
 /// </summary>
-internal sealed class D3DHost : IDisposable
+public sealed class D3DHost : IDisposable
 {
     // --- Constants / "magic numbers" ---
     private const int InitialBackBufferWidth = 1;   // DirectComposition requires a swap chain; we'll resize later
