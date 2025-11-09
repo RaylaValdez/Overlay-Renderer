@@ -4,11 +4,14 @@ using ImGuiNET;
 using Windows.Win32;
 using Windows.Win32.UI.Input.KeyboardAndMouse;
 using System.Runtime.InteropServices;
+using Overlay_Renderer.Helpers;
 
 namespace Overlay_Renderer.Methods
 {
     public static class ImGuiInput
     {
+        public static bool _useOsCursor = false;
+
         [DllImport("user32.dll", EntryPoint = "LoadCursor", CharSet = CharSet.Unicode)]
         private static extern IntPtr LoadCursor(IntPtr hInstance, int lpCursorName);
 
@@ -28,6 +31,7 @@ namespace Overlay_Renderer.Methods
         // Mouse Wheel State (per frame)
         private static float _pendingWheelY;
         private static float _pendingWheelX;
+        private static float _pendingWheel;
 
         // Keyboard States
         private static readonly (VIRTUAL_KEY vk, ImGuiKey key)[] KeyMap =
@@ -139,8 +143,7 @@ namespace Overlay_Renderer.Methods
 
 
             // Apply wheel accumulated from WndProc
-            io.MouseWheel += _pendingWheelY;
-            io.MouseWheelH += _pendingWheelX;
+            io.AddMouseWheelEvent(_pendingWheelX, _pendingWheelY);
             _pendingWheelY = 0;
             _pendingWheelX = 0;
         }
@@ -173,10 +176,11 @@ namespace Overlay_Renderer.Methods
             }
         }
 
-        public static void AddMouseWheelDelta(float deltaY, float deltaX = 0f)
+
+        public static void OnMouseWheel(float deltaX, float deltaY)
         {
-            _pendingWheelY = deltaY;
-            _pendingWheelX = deltaX;
+            _pendingWheelY += deltaY;
+            _pendingWheelX += deltaX;
         }
 
         ///<summary>
@@ -247,6 +251,32 @@ namespace Overlay_Renderer.Methods
             }
         }
 
+        public static void UseOsCursor(bool enable)
+        {
+            _useOsCursor = enable;
 
+            var io = ImGui.GetIO();
+            if (enable)
+                io.ConfigFlags |= ImGuiConfigFlags.NoMouseCursorChange;
+            else
+                io.ConfigFlags &= ~ImGuiConfigFlags.NoMouseCursorChange;
+        }
+
+        public static bool TryGetPressedMappedKey(out VIRTUAL_KEY vk,out ImGuiKey imguiKey)
+        {
+            foreach (var (vkCode, key) in KeyMap)
+            {
+                if (ImGui.IsKeyPressed(key, false))
+                {
+                    vk = vkCode;
+                    imguiKey = key;
+                    return true;
+                }
+            }
+
+            vk = 0;
+            imguiKey = ImGuiKey.None;
+            return false;
+        }
     }
 }

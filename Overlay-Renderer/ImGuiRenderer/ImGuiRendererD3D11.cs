@@ -170,10 +170,16 @@ public sealed class ImGuiRendererD3D11 : IDisposable
     private void RecreateFontTexture()
     {
         var io = ImGui.GetIO();
-        io.Fonts.Clear();
-        io.Fonts.AddFontDefault();
+        var fonts = io.Fonts;
 
-        io.Fonts.GetTexDataAsRGBA32(out nint pixels, out int w, out int h, out int bpp);
+        // If the user hasn't added any fonts yet, fall back to default
+        if (fonts.Fonts.Size == 0)
+            fonts.AddFontDefault();
+
+        fonts.GetTexDataAsRGBA32(out nint pixels, out int w, out int h, out int bpp);
+
+        // Dispose old SRV if we rebuild
+        _fontSRV?.Dispose();
 
         var td = new Texture2DDescription
         {
@@ -197,9 +203,23 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         }
 
         // register font as texture id 1
-        _textures[new nint(ImGuiFontTextureId)] = new TexInfo { SRV = _fontSRV, W = w, H = h };
-        io.Fonts.SetTexID(new nint(ImGuiFontTextureId));
+        var fontId = new nint(ImGuiFontTextureId);
+        _textures[fontId] = new TexInfo { SRV = _fontSRV, W = w, H = h };
+        fonts.SetTexID(fontId);
     }
+
+    public ImFontPtr AddFontFromFileTTF(string path, float sizePixels)
+    {
+        var io = ImGui.GetIO();
+        var font = io.Fonts.AddFontFromFileTTF(path, sizePixels);
+
+        // Rebuild GPU font texture so the new font actually works
+        RecreateFontTexture();
+
+        return font;
+    }
+
+
 
     private void CreateDeviceObjects()
     {

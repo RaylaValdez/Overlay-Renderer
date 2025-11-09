@@ -8,6 +8,7 @@ using Windows.Win32.Graphics.Dwm;
 using Windows.Win32.UI.WindowsAndMessaging;
 using Overlay_Renderer;
 using Windows.Win32.Graphics.Gdi;
+using Overlay_Renderer.Helpers;
 
 namespace Overlay_Renderer;
 
@@ -221,17 +222,19 @@ public sealed class OverlayWindow : IDisposable
 
             case PInvoke.WM_MOUSEWHEEL:
             {
-                int delta = (short)((ulong)wParam.Value >> 16);
-                float steps = delta / 120.0f;
-                ImGuiInput.AddMouseWheelDelta(steps);
+                short delta = (short)((wParam.Value.ToUInt64() >> 16) & 0xffff);
+                float wheel = delta / (float)PInvoke.WHEEL_DELTA;
+
+                ImGuiInput.OnMouseWheel(0f, wheel);
                 return new LRESULT(0);
             }
 
             case PInvoke.WM_MOUSEHWHEEL:
             {
-                int delta = (short)((ulong)wParam.Value >> 16);
-                float steps = delta / 120.0f;
-                ImGuiInput.AddMouseWheelDelta(0f, steps);
+                short delta = (short)((wParam.Value.ToUInt64() >> 16) & 0xffff);
+                float wheel = delta / (float)PInvoke.WHEEL_DELTA;
+
+                ImGuiInput.OnMouseWheel(wheel, 0f);
                 return new LRESULT(0);
             }
 
