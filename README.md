@@ -158,7 +158,7 @@ If you’re writing your own overlay (like **[Starboard](https://github.com/Rayl
 
 See **[Starboard](https://github.com/RaylaValdez/Starboard)** for a real-world integration example:
 - Tracks the *Star Citizen* client window
-- Draws an animated “pill” UI element
+- Draws custom ImGui windows
 - Demonstrates region shaping, input routing, and DPI handling
 
 ---
