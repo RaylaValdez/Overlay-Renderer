@@ -56,6 +56,7 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
         io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
 
+
         RecreateFontTexture();
         CreateDeviceObjects();
     }
@@ -286,12 +287,21 @@ float4 main(PS_IN i):SV_Target { float4 c = i.col * t0.Sample(s0, i.uv); c.rgb *
     public nint CreateTextureFromFile(string path, out int width, out int height)
     {
         using var bmp = new Bitmap(path);
+        return CreateTextureFromBitmap(bmp, out width, out height);
+    }
+
+    /// <summary>
+    /// Creates an ImGui texture from an existing Bitmap.
+    /// Caller is responsible for disposal
+    /// </summary>
+    public nint CreateTextureFromBitmap(Bitmap bmp, out int width, out int height)
+    {
         var rect = new Rectangle(0, 0, bmp.Width, bmp.Height);
 
-        var data = bmp.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb); // BGRA
+        var data = bmp.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+
         try
         {
-            // Use B8G8R8A8 to avoid swizzling
             var td = new Texture2DDescription
             {
                 Width = (uint)bmp.Width,
@@ -315,7 +325,8 @@ float4 main(PS_IN i):SV_Target { float4 c = i.col * t0.Sample(s0, i.uv); c.rgb *
                 var id = new nint(Interlocked.Increment(ref _nextTexId));
                 _textures[id] = new TexInfo { SRV = srv, W = bmp.Width, H = bmp.Height };
 
-                width = bmp.Width; height = bmp.Height;
+                width = bmp.Width;
+                height = bmp.Height;
                 return id;
             }
         }
@@ -328,6 +339,18 @@ float4 main(PS_IN i):SV_Target { float4 c = i.col * t0.Sample(s0, i.uv); c.rgb *
     public (int width, int height) GetTextureSize(nint id)
     {
         return _textures.TryGetValue(id, out var ti) ? (ti.W, ti.H) : (0, 0);
+    }
+
+    public void DestroyTexture(nint id)
+    {
+        if (id == nint.Zero)
+            return;
+
+        if (_textures.TryGetValue(id, out var ti))
+        {
+            ti.SRV?.Dispose();
+            _textures.Remove(id);
+        }
     }
 
     public void Dispose()

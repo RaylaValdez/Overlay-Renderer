@@ -61,6 +61,12 @@ namespace Overlay_Renderer
             using var d3dHost = new D3DHost(overlay.Hwnd);
             using var imguiRenderer = new ImGuiRendererD3D11(d3dHost.Device, d3dHost.Context);
 
+            TextureService.Initialize(imguiRenderer);
+            int browserWidth = 1024;
+            int browserHeight = 768;
+
+            WebBrowserManager.Initialize(overlay.Hwnd, browserWidth, browserHeight);
+
             ImGuiStylePresets.ApplyDark();
 
             var cts = new CancellationTokenSource();

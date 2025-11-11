@@ -68,3 +68,10 @@ GET_Y_LPARAM
 SetWindowRgn
 WM_SETCURSOR
 WHEEL_DELTA
+GetDC
+CreateCompatibleDC
+CreateCompatibleBitmap
+SelectObject
+BitBlt
+DeleteDC
+ReleaseDC

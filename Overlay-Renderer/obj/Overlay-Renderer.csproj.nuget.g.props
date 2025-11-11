@@ -26,5 +26,6 @@
   </ImportGroup>
   <PropertyGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
     <PkgMicrosoft_Windows_CsWin32 Condition=" '$(PkgMicrosoft_Windows_CsWin32)' == '' ">C:\Users\Rayla\.nuget\packages\microsoft.windows.cswin32\0.3.242</PkgMicrosoft_Windows_CsWin32>
+    <PkgMicrosoft_Web_WebView2 Condition=" '$(PkgMicrosoft_Web_WebView2)' == '' ">C:\Users\Rayla\.nuget\packages\microsoft.web.webview2\1.0.3595.46</PkgMicrosoft_Web_WebView2>
   </PropertyGroup>
 </Project>

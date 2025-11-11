@@ -55,6 +55,10 @@
               "target": "Package",
               "version": "[1.91.6.1, )"
             },
+            "Microsoft.Web.WebView2": {
+              "target": "Package",
+              "version": "[1.0.3595.46, )"
+            },
             "Microsoft.Windows.CsWin32": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
               "suppressParent": "All",
@@ -68,6 +72,14 @@
             "OpenCvSharp4.runtime.win": {
               "target": "Package",
               "version": "[4.11.0.20250507, )"
+            },
+            "SharpDX": {
+              "target": "Package",
+              "version": "[4.2.0, )"
+            },
+            "SharpDX.DirectInput": {
+              "target": "Package",
+              "version": "[4.2.0, )"
             },
             "System.Drawing.Common": {
               "target": "Package",

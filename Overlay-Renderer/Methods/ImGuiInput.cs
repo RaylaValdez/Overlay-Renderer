@@ -1,10 +1,11 @@
-﻿using System.Drawing;
+﻿using ImGuiNET;
+using Overlay_Renderer.Helpers;
+using System.Drawing;
 using System.Numerics;
-using ImGuiNET;
+using System.Runtime.InteropServices;
+using System.Text;
 using Windows.Win32;
 using Windows.Win32.UI.Input.KeyboardAndMouse;
-using System.Runtime.InteropServices;
-using Overlay_Renderer.Helpers;
 
 namespace Overlay_Renderer.Methods
 {
@@ -17,6 +18,23 @@ namespace Overlay_Renderer.Methods
 
         [DllImport("user32.dll")]
         private static extern IntPtr SetCursor(IntPtr hCursor);
+
+        [DllImport("user32.dll")]
+        private static extern int GetKeyboardState(byte[] lpKeyState);
+
+        [DllImport("user32.dll")]
+        private static extern uint MapVirtualKey(uint uCode, uint uMapType);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern int ToUnicode(
+            uint wVirtKey,
+            uint wScanCode,
+            byte[] lpKeyState,
+            [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff,
+            int cchBuff,
+            uint wFlags);
+
+        private const uint MAPVK_VK_TO_VSC = 0;
 
         // Standard Cursor ID's
         private const int IDC_ARROW = 32512;
@@ -105,6 +123,19 @@ namespace Overlay_Renderer.Methods
             (VIRTUAL_KEY.VK_F10, ImGuiKey.F10),
             (VIRTUAL_KEY.VK_F11, ImGuiKey.F11),
             (VIRTUAL_KEY.VK_F12, ImGuiKey.F12),
+
+            (VIRTUAL_KEY.VK_OEM_1,   ImGuiKey.Semicolon),      
+            (VIRTUAL_KEY.VK_OEM_PLUS, ImGuiKey.Equal),         
+            (VIRTUAL_KEY.VK_OEM_COMMA, ImGuiKey.Comma),        
+            (VIRTUAL_KEY.VK_OEM_MINUS, ImGuiKey.Minus),        
+            (VIRTUAL_KEY.VK_OEM_PERIOD, ImGuiKey.Period),      
+            (VIRTUAL_KEY.VK_OEM_2,   ImGuiKey.Slash),          
+            (VIRTUAL_KEY.VK_OEM_3,   ImGuiKey.GraveAccent),    
+            (VIRTUAL_KEY.VK_OEM_4,   ImGuiKey.LeftBracket),    
+            (VIRTUAL_KEY.VK_OEM_5,   ImGuiKey.Backslash),      
+            (VIRTUAL_KEY.VK_OEM_6,   ImGuiKey.RightBracket),   
+            (VIRTUAL_KEY.VK_OEM_7,   ImGuiKey.Apostrophe),     
+            
         };
 
         private static readonly bool[] KeyDown = new bool[KeyMap.Length];
@@ -141,6 +172,13 @@ namespace Overlay_Renderer.Methods
             io.MouseDown[1] = (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_RBUTTON) & 0x8000) != 0;
             io.MouseDown[2] = (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_MBUTTON) & 0x8000) != 0;
 
+            // New input system: feed modifier *keys* as well
+            io.AddKeyEvent(ImGuiKey.ModCtrl, io.KeyCtrl);
+            io.AddKeyEvent(ImGuiKey.ModShift, io.KeyShift);
+            io.AddKeyEvent(ImGuiKey.ModAlt, io.KeyAlt);
+            io.AddKeyEvent(ImGuiKey.ModSuper, io.KeySuper);
+
+
 
             // Apply wheel accumulated from WndProc
             io.AddMouseWheelEvent(_pendingWheelX, _pendingWheelY);
@@ -157,11 +195,21 @@ namespace Overlay_Renderer.Methods
             var io = ImGui.GetIO();
 
             // Modifiers (global)
-            io.KeyCtrl = (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_CONTROL) & 0x8000) != 0;
-            io.KeyShift = (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_SHIFT) & 0x8000) != 0;
-            io.KeyAlt = (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_MENU) & 0x8000) != 0;
-            io.KeySuper = (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_LWIN) & 0x8000) != 0 || (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_RWIN) & 0x8000) != 0;
-            
+            bool keyCtrl = (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_CONTROL) & 0x8000) != 0;
+            bool keyShift = (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_SHIFT) & 0x8000) != 0;
+            bool keyAlt = (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_MENU) & 0x8000) != 0;
+            bool keySuper = (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_LWIN) & 0x8000) != 0 || (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_RWIN) & 0x8000) != 0;
+
+            io.KeyCtrl = keyCtrl;
+            io.KeyShift = keyShift;
+            io.KeyAlt = keyAlt;
+            io.KeySuper = keySuper;
+
+            io.AddKeyEvent(ImGuiKey.ModCtrl, keyCtrl);
+            io.AddKeyEvent(ImGuiKey.ModShift, keyShift);
+            io.AddKeyEvent(ImGuiKey.ModAlt, keyAlt);
+            io.AddKeyEvent(ImGuiKey.ModSuper, keySuper);
+
             // Keys 
             for (int i = 0; i < KeyMap.Length; i++)
             {
@@ -172,9 +220,79 @@ namespace Overlay_Renderer.Methods
                 {
                     KeyDown[i] = downNow;
                     io.AddKeyEvent(key, downNow);
+
+                    // On key-down edge, generate text characters
+                    if (downNow && IsTextKey(vk))
+                    {
+                        string chars = TranslateVkToChars(vk);
+                        foreach (char ch in chars)
+                        {
+                            io.AddInputCharacter(ch);
+                        }
+                    }
                 }
             }
         }
+
+        [DllImport("user32.dll", SetLastError = false)]
+        private static extern bool OpenClipboard(IntPtr hWndNewOwner);
+
+        [DllImport("user32.dll", SetLastError = false)]
+        private static extern bool CloseClipboard();
+
+        [DllImport("user32.dll", SetLastError = false)]
+        private static extern bool EmptyClipboard();
+
+        [DllImport("user32.dll", SetLastError = false)]
+        private static extern IntPtr GetClipboardData(uint uFormat);
+
+        [DllImport("user32.dll", SetLastError = false)]
+        private static extern IntPtr SetClipboardData(uint uFormat, IntPtr hMem);
+
+        [DllImport("kernel32.dll", SetLastError = false)]
+        private static extern IntPtr GlobalAlloc(uint uFlags, IntPtr dwBytes);
+
+        [DllImport("kernel32.dll", SetLastError = false)]
+        private static extern IntPtr GlobalLock(IntPtr hMem);
+
+        [DllImport("kernel32.dll", SetLastError = false)]
+        private static extern bool GlobalUnlock(IntPtr hMem);
+
+        private const uint CF_UNICODETEXT = 13;
+        private const uint GMEM_MOVEABLE = 0x0002;
+
+        public static string GetClipboardText()
+        {
+            if (!OpenClipboard(IntPtr.Zero))
+                return string.Empty;
+
+            string result = string.Empty;
+            IntPtr handle = GetClipboardData(CF_UNICODETEXT);
+            if (handle != IntPtr.Zero)
+            {
+                IntPtr ptr = GlobalLock(handle);
+                if (ptr != IntPtr.Zero)
+                {
+                    result = Marshal.PtrToStringUni(ptr) ?? string.Empty;
+                    GlobalUnlock(handle);
+                }
+            }
+
+            CloseClipboard();
+            return result;
+        }
+
+        public static void SetClipboardText(string text)
+        {
+            if (!OpenClipboard(IntPtr.Zero))
+                return;
+
+            EmptyClipboard();
+            IntPtr hGlobal = Marshal.StringToHGlobalUni(text);
+            SetClipboardData(CF_UNICODETEXT, hGlobal);
+            CloseClipboard();
+        }
+
 
 
         public static void OnMouseWheel(float deltaX, float deltaY)
@@ -262,7 +380,7 @@ namespace Overlay_Renderer.Methods
                 io.ConfigFlags &= ~ImGuiConfigFlags.NoMouseCursorChange;
         }
 
-        public static bool TryGetPressedMappedKey(out VIRTUAL_KEY vk,out ImGuiKey imguiKey)
+        public static bool TryGetPressedMappedKey(out VIRTUAL_KEY vk, out ImGuiKey imguiKey)
         {
             foreach (var (vkCode, key) in KeyMap)
             {
@@ -277,6 +395,60 @@ namespace Overlay_Renderer.Methods
             vk = 0;
             imguiKey = ImGuiKey.None;
             return false;
+        }
+
+        public static bool TryGetPressedControllerButton(out ControllerButton button)
+        {
+            return ControllerInput.TryGetNextButtonPress(out button);
+        }
+
+        public static bool IsVKeyPressed(VIRTUAL_KEY vk)
+        {
+            short state = PInvoke.GetAsyncKeyState((int)vk);
+            return (state & 0x8000) != 0;
+        }
+
+        private static bool IsTextKey(VIRTUAL_KEY vk)
+        {
+            // Numbers, letters, space
+            if (vk >= VIRTUAL_KEY.VK_0 && vk <= VIRTUAL_KEY.VK_9) return true;
+            if (vk >= VIRTUAL_KEY.VK_A && vk <= VIRTUAL_KEY.VK_Z) return true;
+            if (vk == VIRTUAL_KEY.VK_SPACE) return true;
+
+            // OEM punctuation
+            if (vk >= VIRTUAL_KEY.VK_OEM_1 && vk <= VIRTUAL_KEY.VK_OEM_7) return true;
+            if (vk == VIRTUAL_KEY.VK_OEM_PLUS ||
+                vk == VIRTUAL_KEY.VK_OEM_COMMA ||
+                vk == VIRTUAL_KEY.VK_OEM_MINUS ||
+                vk == VIRTUAL_KEY.VK_OEM_PERIOD) return true;
+
+            // Numpad digits and basic ops
+            if (vk >= VIRTUAL_KEY.VK_NUMPAD0 && vk <= VIRTUAL_KEY.VK_NUMPAD9) return true;
+            if (vk == VIRTUAL_KEY.VK_DECIMAL ||
+                vk == VIRTUAL_KEY.VK_ADD ||
+                vk == VIRTUAL_KEY.VK_SUBTRACT ||
+                vk == VIRTUAL_KEY.VK_MULTIPLY ||
+                vk == VIRTUAL_KEY.VK_DIVIDE) return true;
+
+            return false;
+        }
+
+
+        private static string TranslateVkToChars(VIRTUAL_KEY vk)
+        {
+            byte[] keyboardState = new byte[256];
+            if (GetKeyboardState(keyboardState) == 0)
+                return string.Empty;
+
+            uint vkCode = (uint)vk;
+            uint scanCode = MapVirtualKey(vkCode, MAPVK_VK_TO_VSC);
+
+            var sb = new StringBuilder(8);
+            int rc = ToUnicode(vkCode, scanCode, keyboardState, sb, sb.Capacity, 0);
+            if (rc <= 0)
+                return string.Empty;
+
+            return sb.ToString();
         }
     }
 }

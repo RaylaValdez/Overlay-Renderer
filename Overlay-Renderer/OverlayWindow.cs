@@ -9,6 +9,7 @@ using Windows.Win32.UI.WindowsAndMessaging;
 using Overlay_Renderer;
 using Windows.Win32.Graphics.Gdi;
 using Overlay_Renderer.Helpers;
+using Windows.Win32.UI.Input.KeyboardAndMouse;
 
 namespace Overlay_Renderer;
 
@@ -225,7 +226,19 @@ public sealed class OverlayWindow : IDisposable
                 short delta = (short)((wParam.Value.ToUInt64() >> 16) & 0xffff);
                 float wheel = delta / (float)PInvoke.WHEEL_DELTA;
 
-                ImGuiInput.OnMouseWheel(0f, wheel);
+                bool shiftDown =
+                    (PInvoke.GetKeyState((int)VIRTUAL_KEY.VK_LSHIFT) & 0x8000) != 0 ||
+                    (PInvoke.GetKeyState((int)VIRTUAL_KEY.VK_RSHIFT) & 0x8000) != 0;
+
+                if (shiftDown)
+                {
+                    ImGuiInput.OnMouseWheel(wheel, 0f);
+                }
+                else
+                {
+                    ImGuiInput.OnMouseWheel(0f, wheel);
+                }
+
                 return new LRESULT(0);
             }
 
@@ -251,6 +264,21 @@ public sealed class OverlayWindow : IDisposable
                     return new LRESULT(1);
                 }
                 break;
+
+            case PInvoke.WM_CHAR:
+            {
+                uint ch = (uint)wParam.Value;
+
+                // Basic filter: ignore control chars except a few
+                if (ch >= 0x20 || ch == '\r' || ch == '\n' || ch == '\t')
+                {
+                    var io = ImGuiNET.ImGui.GetIO();
+                    io.AddInputCharacter(ch);
+                }
+
+                return new LRESULT(0);
+            }
+
         }
 
         return PInvoke.DefWindowProc(hwnd, msg, wParam, lParam);
