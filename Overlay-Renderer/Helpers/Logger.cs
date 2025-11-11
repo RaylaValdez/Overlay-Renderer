@@ -1,11 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Threading;
-using Overlay_Renderer;
-
-
-namespace Overlay_Renderer.Helpers
+﻿namespace Overlay_Renderer.Helpers
 {
     public static class Logger
     {

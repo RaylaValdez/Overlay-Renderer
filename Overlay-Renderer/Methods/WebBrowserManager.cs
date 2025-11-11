@@ -1,9 +1,6 @@
 ﻿using ImGuiNET;
 using Overlay_Renderer.Helpers;
-using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Threading.Tasks;
 using Windows.Win32.Foundation;
 
 namespace Overlay_Renderer.Methods
@@ -70,11 +67,9 @@ namespace Overlay_Renderer.Methods
         {
             _activeAppletId = appletId;
 
-            //Logger.Info($"[WebBrowserManager] SetActiveApplet '{appletId ?? "<null>"}'");
-
             foreach (var kvp in _surfaces)
             {
-                bool active = kvp.Key == appletId;
+                bool active = (appletId != null) && kvp.Key == appletId;
                 kvp.Value.SetActive(active);
             }
         }
@@ -86,6 +81,31 @@ namespace Overlay_Renderer.Methods
         {
             var surf = GetOrCreateSurface(appletId);
             surf.NavigateIfNeeded(url);
+        }
+
+        // ----------------------------
+        // BACK SUPPORT FOR ACTIVE APP
+        // ----------------------------
+        public static bool ActiveCanGoBack()
+        {
+            if (_activeAppletId == null)
+                return false;
+
+            if (!_surfaces.TryGetValue(_activeAppletId, out var surf))
+                return false;
+
+            return surf.CanGoBack;
+        }
+
+        public static void GoBackOnActiveApplet()
+        {
+            if (_activeAppletId == null)
+                return;
+
+            if (_surfaces.TryGetValue(_activeAppletId, out var surf))
+            {
+                surf.GoBack();
+            }
         }
 
         /// <summary>

@@ -1,14 +1,9 @@
-using System;
-using System.Drawing;
 using System.Runtime.InteropServices;
 using Overlay_Renderer.Methods;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Dwm;
 using Windows.Win32.UI.WindowsAndMessaging;
-using Overlay_Renderer;
-using Windows.Win32.Graphics.Gdi;
-using Overlay_Renderer.Helpers;
 using Windows.Win32.UI.Input.KeyboardAndMouse;
 
 namespace Overlay_Renderer;
@@ -256,14 +251,14 @@ public sealed class OverlayWindow : IDisposable
                 break;
 
             case PInvoke.WM_SETCURSOR:
-                int hitTest = (short)((ulong)lParam.Value & 0xFFFF);
-
-                if (hitTest == HTCLIENT)
-                {
-                    ImGuiInput.UpdateMouseCursor();
-                    return new LRESULT(1);
-                }
-                break;
+                //int hitTest = (short)((ulong)lParam.Value & 0xFFFF);
+                //
+                //if (hitTest == HTCLIENT)
+                //{
+                //    ImGuiInput.UpdateMouseCursor();
+                //    return new LRESULT(1);
+                //}
+                return new LRESULT(1);
 
             case PInvoke.WM_CHAR:
             {

@@ -1,11 +1,6 @@
-﻿using System;
-using System.Drawing;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Drawing;
 using Windows.Win32;
 using Windows.Win32.Foundation;
-using Windows.Win32.UI.WindowsAndMessaging;
-using Overlay_Renderer;
 
 namespace Overlay_Renderer.Methods
 {

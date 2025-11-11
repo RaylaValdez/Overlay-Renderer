@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Drawing;
-using System.IO;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Overlay_Renderer.ImGuiRenderer;
 
 namespace Overlay_Renderer.Methods

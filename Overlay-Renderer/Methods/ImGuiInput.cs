@@ -1,5 +1,4 @@
 ﻿using ImGuiNET;
-using Overlay_Renderer.Helpers;
 using System.Drawing;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -449,6 +448,11 @@ namespace Overlay_Renderer.Methods
                 return string.Empty;
 
             return sb.ToString();
+        }
+
+        public static void ForceHideOsCursor()
+        {
+            SetCursor(IntPtr.Zero);
         }
     }
 }

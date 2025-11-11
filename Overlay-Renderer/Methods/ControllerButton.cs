@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Overlay_Renderer.Methods
+﻿namespace Overlay_Renderer.Methods
 {
     // Overlay_Renderer.Methods namespace (Overlay-Renderer project)
     public readonly struct ControllerButton

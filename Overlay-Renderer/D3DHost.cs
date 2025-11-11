@@ -1,4 +1,3 @@
-using System;
 using Windows.Win32.Foundation;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
@@ -7,7 +6,6 @@ using Vortice.DXGI;
 using Vortice.Mathematics;
 using static Vortice.Direct3D11.D3D11;
 using static Vortice.DirectComposition.DComp;
-using Overlay_Renderer;
 
 
 namespace Overlay_Renderer;

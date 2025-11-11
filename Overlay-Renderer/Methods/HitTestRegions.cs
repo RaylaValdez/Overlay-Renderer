@@ -3,7 +3,6 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using ImGuiNET;
 using Windows.Win32.Foundation;
-using Overlay_Renderer;
 
 namespace Overlay_Renderer.Methods
 {
