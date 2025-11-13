@@ -44,6 +44,7 @@ Overlay-Renderer contains the following components:
 - **ImGui.NET** for GUI rendering
 - **DirectComposition** for hardware-accelerated transparency
 - **Windows API** (`HWND`, `RECT`, `SetWindowRgn`, `WM_NCHITTEST`, etc.)
+- **WebView2** 
 
 ---
 
@@ -175,11 +176,12 @@ See **[Starboard](https://github.com/RaylaValdez/Starboard)** for a real-world i
 ## ⚖️ License
 
 Apache-2.0 License
+
 ---
 
 ## 💬 Credits
 
 Built with ❤️ by **Rayla**  
-Powered by [ImGui.NET](https://github.com/mellinoe/ImGui.NET) and [Microsoft CsWin32](https://github.com/microsoft/CsWin32)
+Powered by [ImGui.NET](https://github.com/mellinoe/ImGui.NET), [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2) and [Microsoft CsWin32](https://github.com/microsoft/CsWin32)
 
 ---
