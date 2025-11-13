@@ -53,6 +53,11 @@ namespace Overlay_Renderer.Methods
         ///</summary>
         public static void ApplyToOverlay(OverlayWindow overlay)
         {
+            if (_regions.Count == 0 && overlay.ClientWidth >= 1 && overlay.ClientHeight >= 1)
+            {
+                _regions.Add(new RECT(0, 0, 1, 1));
+            }
+
             if (_regions.Count == 0)
             {
                 overlay.SetHitTestRegions(ReadOnlySpan<RECT>.Empty);
@@ -67,6 +72,11 @@ namespace Overlay_Renderer.Methods
                 r.top = Math.Max(0, r.top);
                 r.right = Math.Min(overlay.ClientWidth, r.right);
                 r.bottom = Math.Min(overlay.ClientHeight, r.bottom);
+
+                // Optional: ensure non-inverted after clamp (defensive)
+                if (r.right < r.left) r.right = r.left;
+                if (r.bottom < r.top) r.bottom = r.top;
+
                 _regions[i] = r;
             }
             

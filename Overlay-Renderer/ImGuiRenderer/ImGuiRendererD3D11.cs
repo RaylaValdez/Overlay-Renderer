@@ -1,4 +1,4 @@
-using System.Drawing;
+﻿using System.Drawing;
 using System.Drawing.Imaging;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -37,7 +37,17 @@ public sealed class ImGuiRendererD3D11 : IDisposable
 
     private ID3D11ShaderResourceView _fontSRV;
 
-    private struct TexInfo { public ID3D11ShaderResourceView SRV; public int W; public int H; }
+    private ID3D11SamplerState _samplerLinear;
+    private ID3D11SamplerState _samplerPoint;
+
+    private struct TexInfo
+    {
+        public ID3D11ShaderResourceView SRV;
+        public int W;
+        public int H;
+        public bool Point;
+    }
+
     private readonly Dictionary<nint, TexInfo> _textures = new();
     private long _nextTexId = 2; // 1 is reserved for the font
 
@@ -125,7 +135,7 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         _ctx.IASetInputLayout(_il);
         _ctx.VSSetShader(_vs);
         _ctx.PSSetShader(_ps);
-        _ctx.PSSetSamplers(0, new[] { _sampler });
+        _ctx.PSSetSamplers(0, new[] { _samplerLinear });
         _ctx.OMSetBlendState(_blend, new Color4(0, 0, 0, 0), 0xFFFFFFFF);
         _ctx.RSSetState(_rast);
         _ctx.OMSetDepthStencilState(_depth, 0);
@@ -150,11 +160,28 @@ public sealed class ImGuiRendererD3D11 : IDisposable
                 var clip = cmd.ClipRect;
                 _ctx.RSSetScissorRect((int)clip.X, (int)clip.Y, (int)clip.Z, (int)clip.W);
 
-                // bind texture for this draw
+                // Bind SRV + the correct sampler for this draw
                 var id = cmd.TextureId;
                 if (id == nint.Zero) id = new nint(ImGuiFontTextureId);
-                if (!_textures.TryGetValue(id, out var ti)) ti = new TexInfo { SRV = _fontSRV };
-                _ctx.PSSetShaderResource(0, ti.SRV);
+
+                ID3D11ShaderResourceView srvToBind;
+                bool usePoint;
+
+                if (id == new nint(ImGuiFontTextureId) || !_textures.TryGetValue(id, out var ti))
+                {
+                    // Font or missing → always linear
+                    srvToBind = _fontSRV;
+                    usePoint = false;
+                }
+                else
+                {
+                    srvToBind = ti.SRV;
+                    usePoint = ti.Point;  // set by CreateTextureFromBitmap(...)
+                }
+
+                _ctx.PSSetShaderResource(0, srvToBind);
+                _ctx.PSSetSamplers(0, new[] { usePoint ? _samplerPoint : _samplerLinear });
+
 
                 _ctx.DrawIndexed(cmd.ElemCount, (uint)idxOfs, vtxOfs);
                 idxOfs += (int)cmd.ElemCount;
@@ -200,7 +227,7 @@ public sealed class ImGuiRendererD3D11 : IDisposable
 
         // register font as texture id 1
         var fontId = new nint(ImGuiFontTextureId);
-        _textures[fontId] = new TexInfo { SRV = _fontSRV, W = w, H = h };
+        _textures[fontId] = new TexInfo { SRV = _fontSRV, W = w, H = h, Point = false }; // linear
         fonts.SetTexID(fontId);
     }
 
@@ -220,14 +247,14 @@ public sealed class ImGuiRendererD3D11 : IDisposable
     private void CreateDeviceObjects()
     {
         string vs = @"cbuffer vertexBuffer : register(b0) { float4x4 ProjectionMatrix; }
-struct VS_IN { float2 pos : POSITION; float2 uv : TEXCOORD0; float4 col : COLOR0; };
-struct PS_IN { float4 pos : SV_POSITION; float2 uv : TEXCOORD0; float4 col : COLOR0; };
-PS_IN main(VS_IN i){ PS_IN o; o.pos = mul(ProjectionMatrix, float4(i.pos.xy,0,1)); o.uv=i.uv; o.col=i.col; return o; }";
+        struct VS_IN { float2 pos : POSITION; float2 uv : TEXCOORD0; float4 col : COLOR0; };
+        struct PS_IN { float4 pos : SV_POSITION; float2 uv : TEXCOORD0; float4 col : COLOR0; };
+        PS_IN main(VS_IN i){ PS_IN o; o.pos = mul(ProjectionMatrix, float4(i.pos.xy,0,1)); o.uv=i.uv; o.col=i.col; return o; }";
 
         // Premultiply in shader to match Src=ONE blending
         string ps = @"struct PS_IN { float4 pos : SV_POSITION; float2 uv : TEXCOORD0; float4 col : COLOR0; };
-sampler s0; Texture2D t0;
-float4 main(PS_IN i):SV_Target { float4 c = i.col * t0.Sample(s0, i.uv); c.rgb *= c.a; return c; }";
+        sampler s0; Texture2D t0;
+        float4 main(PS_IN i):SV_Target { float4 c = i.col * t0.Sample(s0, i.uv); c.rgb *= c.a; return c; }";
 
         var vsBytes = Compiler.Compile(vs, null, "main", "imgui_vs", "vs_5_0", ShaderFlags.OptimizationLevel3, EffectFlags.None);
         var psBytes = Compiler.Compile(ps, null, "main", "imgui_ps", "ps_5_0", ShaderFlags.OptimizationLevel3, EffectFlags.None);
@@ -275,6 +302,27 @@ float4 main(PS_IN i):SV_Target { float4 c = i.col * t0.Sample(s0, i.uv); c.rgb *
 
         var dd = new DepthStencilDescription(false, DepthWriteMask.All, ComparisonFunction.Always);
         _depth = _device.CreateDepthStencilState(dd);
+
+        _samplerLinear = _device.CreateSamplerState(new SamplerDescription()
+        {
+            Filter = Filter.MinMagMipLinear,
+            AddressU = TextureAddressMode.Wrap,
+            AddressV = TextureAddressMode.Wrap,
+            AddressW = TextureAddressMode.Wrap,
+            ComparisonFunc = ComparisonFunction.Never,
+            MinLOD = 0, MaxLOD = float.MaxValue
+        });
+
+        _samplerPoint = _device.CreateSamplerState(new SamplerDescription()
+        {
+            Filter = Filter.MinMagMipPoint,
+            AddressU = TextureAddressMode.Clamp,
+            AddressV = TextureAddressMode.Clamp,
+            AddressW = TextureAddressMode.Clamp,
+            ComparisonFunc = ComparisonFunction.Never,
+            MinLOD = 0,
+            MaxLOD = float.MaxValue
+        });
     }
 
     // ----------- Texture API for the app -----------
@@ -289,7 +337,7 @@ float4 main(PS_IN i):SV_Target { float4 c = i.col * t0.Sample(s0, i.uv); c.rgb *
     /// Creates an ImGui texture from an existing Bitmap.
     /// Caller is responsible for disposal
     /// </summary>
-    public nint CreateTextureFromBitmap(Bitmap bmp, out int width, out int height)
+    public nint CreateTextureFromBitmap(Bitmap bmp, out int width, out int height, bool pointSampling = false)
     {
         var rect = new Rectangle(0, 0, bmp.Width, bmp.Height);
 
@@ -318,10 +366,8 @@ float4 main(PS_IN i):SV_Target { float4 c = i.col * t0.Sample(s0, i.uv); c.rgb *
                 var srv = _device.CreateShaderResourceView(tex);
 
                 var id = new nint(Interlocked.Increment(ref _nextTexId));
-                _textures[id] = new TexInfo { SRV = srv, W = bmp.Width, H = bmp.Height };
-
-                width = bmp.Width;
-                height = bmp.Height;
+                _textures[id] = new TexInfo { SRV = srv, W = bmp.Width, H = bmp.Height, Point = pointSampling };
+                width = bmp.Width; height = bmp.Height;
                 return id;
             }
         }

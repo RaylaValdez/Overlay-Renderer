@@ -75,3 +75,5 @@ SelectObject
 BitBlt
 DeleteDC
 ReleaseDC
+GetWindowLong
+SetWindowLong
