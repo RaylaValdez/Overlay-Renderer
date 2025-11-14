@@ -2,6 +2,7 @@
 using Overlay_Renderer.Helpers;
 using System.Numerics;
 using Windows.Win32.Foundation;
+using System;
 
 namespace Overlay_Renderer.Methods
 {
@@ -18,6 +19,21 @@ namespace Overlay_Renderer.Methods
         private static bool _mouseOverAnyWebRegion;
 
         public static bool MouseOverWebRegion => _mouseOverAnyWebRegion;
+
+        public static Func<string?>? GlobalDocumentScriptProvider { get; set; }
+
+        internal static string? GetGlobalDocumentScript()
+        {
+            try
+            {
+                return GlobalDocumentScriptProvider?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn($"[WebBrowserManager] GlobalDocumentScriptPriveder threw: {ex.Message}");
+                return null;
+            }
+        }
 
         public static void Initialize(HWND overlayHwnd, int width, int height)
         {
@@ -37,6 +53,9 @@ namespace Overlay_Renderer.Methods
         {
             _mouseOverAnyWebRegion = false;
         }
+
+
+
 
         private static WebViewSurface GetOrCreateSurface(string appletId)
         {

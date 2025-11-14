@@ -77,3 +77,5 @@ DeleteDC
 ReleaseDC
 GetWindowLong
 SetWindowLong
+GetCursor
+SetCursor
