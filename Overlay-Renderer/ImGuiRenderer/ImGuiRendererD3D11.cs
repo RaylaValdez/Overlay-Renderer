@@ -160,7 +160,6 @@ public sealed class ImGuiRendererD3D11 : IDisposable
                 var clip = cmd.ClipRect;
                 _ctx.RSSetScissorRect((int)clip.X, (int)clip.Y, (int)clip.Z, (int)clip.W);
 
-                // Bind SRV + the correct sampler for this draw
                 var id = cmd.TextureId;
                 if (id == nint.Zero) id = new nint(ImGuiFontTextureId);
 
@@ -169,14 +168,13 @@ public sealed class ImGuiRendererD3D11 : IDisposable
 
                 if (id == new nint(ImGuiFontTextureId) || !_textures.TryGetValue(id, out var ti))
                 {
-                    // Font or missing → always linear
                     srvToBind = _fontSRV;
                     usePoint = false;
                 }
                 else
                 {
                     srvToBind = ti.SRV;
-                    usePoint = ti.Point;  // set by CreateTextureFromBitmap(...)
+                    usePoint = ti.Point;
                 }
 
                 _ctx.PSSetShaderResource(0, srvToBind);
@@ -195,13 +193,11 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         var io = ImGui.GetIO();
         var fonts = io.Fonts;
 
-        // If the user hasn't added any fonts yet, fall back to default
         if (fonts.Fonts.Size == 0)
             fonts.AddFontDefault();
 
         fonts.GetTexDataAsRGBA32(out nint pixels, out int w, out int h, out int bpp);
 
-        // Dispose old SRV if we rebuild
         _fontSRV?.Dispose();
 
         var td = new Texture2DDescription
@@ -225,9 +221,8 @@ public sealed class ImGuiRendererD3D11 : IDisposable
             _fontSRV = _device.CreateShaderResourceView(tex);
         }
 
-        // register font as texture id 1
         var fontId = new nint(ImGuiFontTextureId);
-        _textures[fontId] = new TexInfo { SRV = _fontSRV, W = w, H = h, Point = false }; // linear
+        _textures[fontId] = new TexInfo { SRV = _fontSRV, W = w, H = h, Point = false };
         fonts.SetTexID(fontId);
     }
 
@@ -236,7 +231,6 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         var io = ImGui.GetIO();
         var font = io.Fonts.AddFontFromFileTTF(path, sizePixels);
 
-        // Rebuild GPU font texture so the new font actually works
         RecreateFontTexture();
 
         return font;
@@ -251,7 +245,6 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         struct PS_IN { float4 pos : SV_POSITION; float2 uv : TEXCOORD0; float4 col : COLOR0; };
         PS_IN main(VS_IN i){ PS_IN o; o.pos = mul(ProjectionMatrix, float4(i.pos.xy,0,1)); o.uv=i.uv; o.col=i.col; return o; }";
 
-        // Premultiply in shader to match Src=ONE blending
         string ps = @"struct PS_IN { float4 pos : SV_POSITION; float2 uv : TEXCOORD0; float4 col : COLOR0; };
         sampler s0; Texture2D t0;
         float4 main(PS_IN i):SV_Target { float4 c = i.col * t0.Sample(s0, i.uv); c.rgb *= c.a; return c; }";
@@ -286,7 +279,7 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         var rtb = new RenderTargetBlendDescription
         {
             BlendEnable = true,
-            SourceBlend = Blend.One,                  // premultiplied
+            SourceBlend = Blend.One,                  
             DestinationBlend = Blend.InverseSourceAlpha,
             BlendOperation = BlendOperation.Add,
             SourceBlendAlpha = Blend.One,
@@ -324,8 +317,6 @@ public sealed class ImGuiRendererD3D11 : IDisposable
             MaxLOD = float.MaxValue
         });
     }
-
-    // ----------- Texture API for the app -----------
 
     public nint CreateTextureFromFile(string path, out int width, out int height)
     {

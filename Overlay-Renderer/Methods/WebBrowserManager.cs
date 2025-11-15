@@ -45,7 +45,7 @@ namespace Overlay_Renderer.Methods
 
             unsafe
             {
-                Logger.Info($"[WebBrowserManager] Initialize overlayHwnd=0x{(nuint)_overlayHwnd.Value:X}");
+                //Logger.Info($"[WebBrowserManager] Initialize overlayHwnd=0x{(nuint)_overlayHwnd.Value:X}");
             }
         }
 
@@ -78,7 +78,7 @@ namespace Overlay_Renderer.Methods
             var initTask = s.InitializeAsync();
             _initTasks[appletId] = initTask;
 
-            Logger.Info($"[WebBrowserManager] Created WebViewSurface for '{appletId}'");
+            //Logger.Info($"[WebBrowserManager] Created WebViewSurface for '{appletId}'");
             return s;
         }
 

@@ -25,14 +25,10 @@ namespace Overlay_Renderer.Methods
         private const int CursorHookRetryMs = 1000;
         private long _lastCursorHookAttemptTicks;
 
-
-        // For logging / debugging placement
         private Rectangle _lastBounds;
         private bool _hasLastBounds;
 
         public bool IsInitialized => _initialized && !_initFailed;
-
-        // --- cursor blocking for WebView child HWND ---
 
         private IntPtr _webViewHwnd = IntPtr.Zero;
         private IntPtr _webViewOldWndProc = IntPtr.Zero;
@@ -102,10 +98,10 @@ namespace Overlay_Renderer.Methods
 
             try
             {
-                Logger.Info("[WebViewSurface] Creating WebView2 environment (per-surface).");
+                //Logger.Info("[WebViewSurface] Creating WebView2 environment (per-surface).");
                 _env = await CoreWebView2Environment.CreateAsync();
 
-                Logger.Info("[WebViewSurface] Creating WebView2 controller (HWND host).");
+                //Logger.Info("[WebViewSurface] Creating WebView2 controller (HWND host).");
                 _controller = await _env.CreateCoreWebView2ControllerAsync(_parentHwnd);
                 _core = _controller.CoreWebView2;
 
@@ -122,16 +118,14 @@ namespace Overlay_Renderer.Methods
                     Logger.Warn($"[WebViewSurface] Failed to inject global document script: {ex.Message}");
                 }
 
-                // Initial bounds – will be updated every frame
                 _controller.Bounds = new Rectangle(0, 0, 1, 1);
                 _controller.IsVisible = _active;
 
-                // Async: find & subclass the WebView child HWND to kill WM_SETCURSOR
                 _ = HookChildForCursorAsync();
 
                 _initialized = true;
                 _initFailed = false;
-                Logger.Info("[WebViewSurface] WebView2 surface initialized.");
+                //Logger.Info("[WebViewSurface] WebView2 surface initialized.");
             }
             catch (Exception ex)
             {
@@ -151,7 +145,6 @@ namespace Overlay_Renderer.Methods
             {
                 _controller.IsVisible = active;
 
-                // Optional: pause JS timers etc. when inactive
                 if (_core != null)
                 {
                     string policy = active ? "advance" : "pause";
@@ -177,7 +170,7 @@ namespace Overlay_Renderer.Methods
             _lastUrl = url;
             try
             {
-                Logger.Info($"[WebViewSurface] navigating to {url}");
+                //Logger.Info($"[WebViewSurface] navigating to {url}");
                 _core.Navigate(url);
             }
             catch (Exception ex)
@@ -244,12 +237,10 @@ namespace Overlay_Renderer.Methods
                 _controller.Bounds = rect;
                 _controller.IsVisible = _active;
 
-                // Log only when bounds actually change so we don't spam
                 if (!_hasLastBounds || !_lastBounds.Equals(rect))
                 {
                     _hasLastBounds = true;
                     _lastBounds = rect;
-                    // Logger.Info($"[WebViewSurface] UpdateBounds -> {rect}");
                 }
             }
             catch (Exception ex)
@@ -267,7 +258,6 @@ namespace Overlay_Renderer.Methods
         {
             try
             {
-                // Give WebView2 some time to spin up its window hierarchy
                 await Task.Delay(500).ConfigureAwait(false);
 
                 IntPtr parent = _parentHwnd;
@@ -277,13 +267,12 @@ namespace Overlay_Renderer.Methods
                     return;
                 }
 
-                Logger.Info("[WebViewSurface] Enumerating child windows of overlay for cursor hook...");
+                //Logger.Info("[WebViewSurface] Enumerating child windows of overlay for cursor hook...");
 
                 IntPtr topLevel = IntPtr.Zero;
                 var sb = new StringBuilder(256);
                 int loggedCount = 0;
 
-                // 1) Find the top-level WebView/Chrome child of the overlay
                 EnumChildProc findTop = (hwnd, lParam) =>
                 {
                     sb.Clear();
@@ -295,7 +284,7 @@ namespace Overlay_Renderer.Methods
 
                     if (loggedCount < 10)
                     {
-                        Logger.Info($"[WebViewSurface] Child HWND=0x{hwnd.ToInt64():X}, class='{cls}'");
+                        //Logger.Info($"[WebViewSurface] Child HWND=0x{hwnd.ToInt64():X}, class='{cls}'");
                         loggedCount++;
                     }
 
@@ -305,7 +294,7 @@ namespace Overlay_Renderer.Methods
                         cls.Contains("Chrome_WidgetWin", StringComparison.OrdinalIgnoreCase))
                     {
                         topLevel = hwnd;
-                        return false; // stop, we found a candidate
+                        return false;
                     }
 
                     return true;
@@ -319,7 +308,6 @@ namespace Overlay_Renderer.Methods
                     return;
                 }
 
-                // 2) Try to find an actual render widget under that top-level window
                 IntPtr renderChild = IntPtr.Zero;
 
                 EnumChildProc findRender = (hwnd, lParam) =>
@@ -333,7 +321,7 @@ namespace Overlay_Renderer.Methods
 
                     if (loggedCount < 20)
                     {
-                        Logger.Info($"[WebViewSurface]   Sub-child HWND=0x{hwnd.ToInt64():X}, class='{cls}'");
+                        //Logger.Info($"[WebViewSurface]   Sub-child HWND=0x{hwnd.ToInt64():X}, class='{cls}'");
                         loggedCount++;
                     }
 
@@ -350,7 +338,6 @@ namespace Overlay_Renderer.Methods
 
                 EnumChildWindows(topLevel, findRender, IntPtr.Zero);
 
-                // Prefer the deepest child, but fall back to top-level
                 IntPtr candidate = renderChild != IntPtr.Zero ? renderChild : topLevel;
 
                 if (!TrySubclassWebViewWindow(candidate, sb))
@@ -375,7 +362,6 @@ namespace Overlay_Renderer.Methods
 
             lock (_cursorHookLock)
             {
-                // If we already hooked this exact window and it still exists, do nothing.
                 if (_cursorHookInstalled && _webViewHwnd == hwnd && IsWindow(hwnd))
                     return true;
 
@@ -396,17 +382,14 @@ namespace Overlay_Renderer.Methods
                     return false;
                 }
 
-                // If the window is already using our hook stub, someone (probably us) already subclassed it.
-                // In that case, DO NOT overwrite _webViewOldWndProc with the hook pointer.
                 if (prev == hookPtr)
                 {
-                    Logger.Info($"[WebViewSurface] hwnd=0x{hwnd.ToInt64():X} already subclassed; keeping existing old proc.");
+                    //Logger.Info($"[WebViewSurface] hwnd=0x{hwnd.ToInt64():X} already subclassed; keeping existing old proc.");
                     _webViewHwnd = hwnd;
                     _cursorHookInstalled = true;
                     return true;
                 }
 
-                // First time we see this window: capture its original WndProc ONCE.
                 if (_webViewOldWndProc == IntPtr.Zero)
                 {
                     _webViewOldWndProc = prev;
@@ -424,7 +407,7 @@ namespace Overlay_Renderer.Methods
 
                 sb.Clear();
                 GetClassName(hwnd, sb, sb.Capacity);
-                Logger.Info($"[WebViewSurface] Subclassed WebView child hwnd=0x{hwnd.ToInt64():X}, class='{sb}' to suppress WM_SETCURSOR.");
+                //Logger.Info($"[WebViewSurface] Subclassed WebView child hwnd=0x{hwnd.ToInt64():X}, class='{sb}' to suppress WM_SETCURSOR.");
 
                 _webViewHwnd = hwnd;
                 _cursorHookInstalled = true;
@@ -438,11 +421,8 @@ namespace Overlay_Renderer.Methods
         {
             if (msg == WM_SETCURSOR)
             {
-                // Hard block: tell user32 this has been handled so Chrome/WebView
-                // never sees WM_SETCURSOR and can't call SetCursor.
-                Logger.Info($"[WebViewSurface] WM_SETCURSOR blocked for hwnd=0x{hWnd.ToInt64():X}");
-
-                return new IntPtr(1); // TRUE
+                //Logger.Info($"[WebViewSurface] WM_SETCURSOR blocked for hwnd=0x{hWnd.ToInt64():X}");
+                return new IntPtr(1);
             }
 
             var old = _webViewOldWndProc;
@@ -452,7 +432,6 @@ namespace Overlay_Renderer.Methods
                 return CallWindowProc(old, hWnd, msg, wParam, lParam);
             }
 
-            // Safety fallback: if we somehow lost the old proc, don't recurse; just use DefWindowProc.
             return DefWindowProc(hWnd, msg, wParam, lParam);
         }
 
@@ -464,11 +443,9 @@ namespace Overlay_Renderer.Methods
         /// </summary>
         private void EnsureCursorHook()
         {
-            // only makes sense once WebView is initialized and not failed
             if (!_initialized || _initFailed)
                 return;
 
-            // if we already have a window and it still exists, nothing to do
             if (_cursorHookInstalled && _webViewHwnd != IntPtr.Zero && IsWindow(_webViewHwnd))
                 return;
 
@@ -486,7 +463,6 @@ namespace Overlay_Renderer.Methods
 
             _lastCursorHookAttemptTicks = now;
 
-            // fire-and-forget re-scan; no await here, we’re on the render thread
             _ = HookChildForCursorAsync();
         }
 
@@ -497,7 +473,7 @@ namespace Overlay_Renderer.Methods
                 if (_webViewHwnd != IntPtr.Zero && _webViewOldWndProc != IntPtr.Zero)
                 {
                     SetWindowLongPtrSafe(_webViewHwnd, GWLP_WNDPROC, _webViewOldWndProc);
-                    Logger.Info($"[WebViewSurface] Restored original WndProc for WebView HWND=0x{_webViewHwnd.ToInt64():X}.");
+                    //Logger.Info($"[WebViewSurface] Restored original WndProc for WebView HWND=0x{_webViewHwnd.ToInt64():X}.");
                 }
             }
             catch
