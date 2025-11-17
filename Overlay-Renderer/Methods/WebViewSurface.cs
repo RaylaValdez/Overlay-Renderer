@@ -143,14 +143,52 @@ namespace Overlay_Renderer.Methods
 
             try
             {
+                // Show/hide the WebView window
                 _controller.IsVisible = active;
 
                 if (_core != null)
                 {
+                    // 1) Hard mute when inactive, unmute when active
+                    _core.IsMuted = !active;
+
+                    // 2) Virtual time policy, like you already had
                     string policy = active ? "advance" : "pause";
                     _core.CallDevToolsProtocolMethodAsync(
                         "Emulation.setVirtualTimePolicy",
                         $"{{\"policy\":\"{policy}\"}}");
+
+                    // 3) Proactively pause media when deactivating
+                    if (!active)
+                    {
+                        // Best-effort JS: pause all <video>/<audio> and mute them
+                        const string pauseMediaJs = @"
+                            try {
+                                const media = document.querySelectorAll('video,audio');
+                                media.forEach(function(el) {
+                                    try {
+                                        if (el.pause) el.pause();
+                                    } catch (_) {}
+                                    try {
+                                        el.muted = true;
+                                    } catch (_) {}
+                                });
+                            } catch (_) { }
+                            ";
+                        _core.ExecuteScriptAsync(pauseMediaJs);
+                    }
+                    else
+                    {
+                        // Optional: unmute elements again when reactivating
+                        const string unmuteMediaJs = @"
+                            try {
+                                const media = document.querySelectorAll('video,audio');
+                                media.forEach(function(el) {
+                                    try { el.muted = false; } catch (_) {}
+                                });
+                            } catch (_) { }
+                            ";
+                        _core.ExecuteScriptAsync(unmuteMediaJs);
+                    }
                 }
             }
             catch (Exception ex)
@@ -158,6 +196,7 @@ namespace Overlay_Renderer.Methods
                 Logger.Warn($"[WebViewSurface] SetActive failed: {ex.Message}");
             }
         }
+
 
         public void NavigateIfNeeded(string url)
         {
@@ -378,7 +417,7 @@ namespace Overlay_Renderer.Methods
 
                 if (prev == IntPtr.Zero && err != 0)
                 {
-                    Logger.Warn($"[WebViewSurface] GetWindowLongPtr(GWLP_WNDPROC) failed for hwnd=0x{hwnd.ToInt64():X}, error={err}");
+                    //Logger.Warn($"[WebViewSurface] GetWindowLongPtr(GWLP_WNDPROC) failed for hwnd=0x{hwnd.ToInt64():X}, error={err}");
                     return false;
                 }
 
@@ -401,7 +440,7 @@ namespace Overlay_Renderer.Methods
 
                 if (res == IntPtr.Zero && err != 0)
                 {
-                    Logger.Warn($"[WebViewSurface] SetWindowLongPtr(GWLP_WNDPROC) failed for hwnd=0x{hwnd.ToInt64():X}, error={err}");
+                    //Logger.Warn($"[WebViewSurface] SetWindowLongPtr(GWLP_WNDPROC) failed for hwnd=0x{hwnd.ToInt64():X}, error={err}");
                     return false;
                 }
 

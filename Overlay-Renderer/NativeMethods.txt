@@ -79,3 +79,8 @@ GetWindowLong
 SetWindowLong
 GetCursor
 SetCursor
+DragAcceptFiles
+HDROP
+DragQueryPoint
+DragQueryFile
+DragFinish

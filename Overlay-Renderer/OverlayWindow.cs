@@ -1,10 +1,14 @@
-using System.Runtime.InteropServices;
+using Overlay_Renderer.Helpers;
 using Overlay_Renderer.Methods;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Runtime.InteropServices;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Dwm;
-using Windows.Win32.UI.WindowsAndMessaging;
 using Windows.Win32.UI.Input.KeyboardAndMouse;
+using Windows.Win32.UI.Shell;
+using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Overlay_Renderer;
 
@@ -53,6 +57,10 @@ public sealed class OverlayWindow : IDisposable
 
     // Native window region handle (for shaping)
     private IntPtr _windowRegion = IntPtr.Zero;
+
+    private static readonly List<(string Path, Point Pt)> _pendingFileDrops = new();
+    private const int WM_DROPFILES = 0x0233;
+
 
     public bool Visible
     {
@@ -122,6 +130,7 @@ public sealed class OverlayWindow : IDisposable
             PInvoke.DwmEnableBlurBehindWindow(Hwnd, bb);
         }
 
+        PInvoke.DragAcceptFiles(Hwnd, true);
         PInvoke.ShowWindow(Hwnd, SHOW_WINDOW_CMD.SW_HIDE);
         PInvoke.UpdateWindow(Hwnd);
     }
@@ -197,6 +206,65 @@ public sealed class OverlayWindow : IDisposable
             SET_WINDOW_POS_FLAGS.SWP_NOSENDCHANGING);
     }
 
+    private static unsafe void HandleDropFiles(WPARAM wParam)
+    {
+        var hDrop = new Windows.Win32.UI.Shell.HDROP((void*)wParam.Value);
+
+        Point pt = new();
+        PInvoke.DragQueryPoint(hDrop, &pt);
+
+        uint fileCount = PInvoke.DragQueryFile(hDrop, 0xFFFFFFFF, null, 0);
+        Logger.Info($"[FileDrop] WM_DROPFILES received, count={fileCount}.");
+
+
+        if (fileCount == 0)
+        {
+            PInvoke.DragFinish(hDrop);
+            return;
+        }
+
+        uint maxLen = 0;
+        for (uint i = 0; i < fileCount; i++)
+        {
+            uint thisLen = PInvoke.DragQueryFile(hDrop, i, null, 0);
+            if (thisLen > maxLen)
+                maxLen = thisLen;
+        }
+
+        Span<char> buffer = stackalloc char[(int)maxLen + 1];
+
+        for (uint i = 0; i < fileCount; i++)
+        {
+            uint thisLen = PInvoke.DragQueryFile(hDrop, i, null, 0);
+
+            fixed (char* p = buffer)
+            {
+                PInvoke.DragQueryFile(hDrop, i, p, thisLen + 1);
+                string path = new string(p, 0, (int)thisLen);
+
+                Logger.Info($"[FileDrop]   Queuing drop: '{path}' at ({pt.X}, {pt.Y}).");
+
+                lock (_pendingFileDrops)
+                {
+                    _pendingFileDrops.Add((path, pt));
+                }
+            }
+        }
+
+        PInvoke.DragFinish(hDrop);
+    }
+
+    public static List<(string Path, Point Pt)> TakePendingFileDrops()
+    {
+        lock (_pendingFileDrops)
+        {
+            var copy = new List<(string Path, Point Pt)>(_pendingFileDrops);
+            _pendingFileDrops.Clear();
+            return copy;
+        }
+    }
+
+
     private LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam)
     {
         switch (msg)
@@ -271,6 +339,12 @@ public sealed class OverlayWindow : IDisposable
                     io.AddInputCharacter(ch);
                 }
 
+                return new LRESULT(0);
+            }
+
+            case WM_DROPFILES:
+            {
+                HandleDropFiles(wParam);
                 return new LRESULT(0);
             }
 
