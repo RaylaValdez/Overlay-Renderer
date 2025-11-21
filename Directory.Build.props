@@ -1,0 +1,18 @@
+<Project>
+  <!-- Shared settings for all projects in the repo -->
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Deterministic>true</Deterministic>
+    <DebugType>portable</DebugType>
+
+    <!-- If CI forgets to pass -p:Version, this fallback prevents 1.0.0 -->
+    <Version>0.14.1-local</Version>
+
+    <!-- Keep assembly version stable for ABI (optional) -->
+    <AssemblyVersion>0.14.1</AssemblyVersion>
+
+    <!-- FileVersion will follow Version unless overridden -->
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+</Project>

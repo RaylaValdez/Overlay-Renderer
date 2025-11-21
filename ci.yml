@@ -1,0 +1,54 @@
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      # Base major.minor you want for this branch (edit as you bump features)
+      BASE_VERSION: 0.18
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Compute build version
+        id: ver
+        shell: pwsh
+        run: |
+          $v = "${{ env.BASE_VERSION }}.${{ github.run_number }}"
+          echo "version=$v" >> $env:GITHUB_OUTPUT
+          echo "CI VERSION: $v"
+
+      - name: Restore
+        run: dotnet restore
+
+      # Build both projects with the computed version (without editing csproj)
+      - name: Build Starboard
+        run: dotnet build Starboard/Starboard.csproj -c Release -p:Version=${{ steps.ver.outputs.version }} -p:ContinuousIntegrationBuild=true
+
+      - name: Build Overlay-Renderer
+        run: dotnet build Overlay-Renderer/Overlay-Renderer.csproj -c Release -p:Version=${{ steps.ver.outputs.version }} -p:ContinuousIntegrationBuild=true
+
+      # Publish artifacts (optional)
+      - name: Publish Starboard
+        run: dotnet publish Starboard/Starboard.csproj -c Release -p:Version=${{ steps.ver.outputs.version }} -p:ContinuousIntegrationBuild=true -o out/starboard
+
+      - name: Publish Overlay-Renderer
+        run: dotnet publish Overlay-Renderer/Overlay-Renderer.csproj -c Release -p:Version=${{ steps.ver.outputs.version }} -p:ContinuousIntegrationBuild=true -o out/overlay
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: starboard-${{ steps.ver.outputs.version }}
+          path: out/**
