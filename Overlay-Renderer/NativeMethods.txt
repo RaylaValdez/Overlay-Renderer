@@ -84,3 +84,4 @@ HDROP
 DragQueryPoint
 DragQueryFile
 DragFinish
+GET_WHEEL_DELTA_WPARAM

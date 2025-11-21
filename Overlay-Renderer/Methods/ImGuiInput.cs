@@ -138,6 +138,8 @@ namespace Overlay_Renderer.Methods
         };
 
         private static readonly bool[] KeyDown = new bool[KeyMap.Length];
+        private static readonly double[] KeyNextRepeatTime = new double[KeyMap.Length];
+
 
         /// <summary>
         /// Update ImGui mouse position and button state based on the current cursor.
@@ -209,25 +211,48 @@ namespace Overlay_Renderer.Methods
             io.AddKeyEvent(ImGuiKey.ModAlt, keyAlt);
             io.AddKeyEvent(ImGuiKey.ModSuper, keySuper);
 
+            double now = ImGui.GetTime();
+            float repeatDelay = io.KeyRepeatDelay;
+            float repeatRate = io.KeyRepeatRate;
+
             // Keys 
             for (int i = 0; i < KeyMap.Length; i++)
             {
                 var (vk, key) = KeyMap[i];
                 bool downNow = (PInvoke.GetAsyncKeyState((int)vk) & 0x8000) != 0;
 
+                // Edge change -> send key event
                 if (downNow != KeyDown[i])
                 {
                     KeyDown[i] = downNow;
                     io.AddKeyEvent(key, downNow);
 
-                    // On key-down edge, generate text characters
                     if (downNow && IsTextKey(vk))
+                    {
+                        // Immediate first char
+                        string chars = TranslateVkToChars(vk);
+                        foreach (char ch in chars)
+                            io.AddInputCharacter(ch);
+
+                        // Schedule first repeat
+                        KeyNextRepeatTime[i] = now + repeatDelay;
+                    }
+                    else
+                    {
+                        // Key released: stop repeat
+                        KeyNextRepeatTime[i] = 0.0;
+                    }
+                }
+                else if (downNow && IsTextKey(vk))
+                {
+                    // Held: handle repeats
+                    if (now >= KeyNextRepeatTime[i] && KeyNextRepeatTime[i] > 0.0)
                     {
                         string chars = TranslateVkToChars(vk);
                         foreach (char ch in chars)
-                        {
                             io.AddInputCharacter(ch);
-                        }
+
+                        KeyNextRepeatTime[i] = now + repeatRate;
                     }
                 }
             }

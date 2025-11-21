@@ -286,20 +286,20 @@ public sealed class OverlayWindow : IDisposable
 
             case PInvoke.WM_MOUSEWHEEL:
             {
-                short delta = (short)((wParam.Value.ToUInt64() >> 16) & 0xffff);
+                int w = (int)wParam.Value;
+                short delta = (short)((w >> 16) & 0xFFFF);
                 float wheel = delta / (float)PInvoke.WHEEL_DELTA;
 
-                bool shiftDown =
-                    (PInvoke.GetKeyState((int)VIRTUAL_KEY.VK_LSHIFT) & 0x8000) != 0 ||
-                    (PInvoke.GetKeyState((int)VIRTUAL_KEY.VK_RSHIFT) & 0x8000) != 0;
+                var io = ImGuiNET.ImGui.GetIO();
 
-                if (shiftDown)
+                // Shift = horizontal scroll, no Shift = vertical scroll
+                if (io.KeyShift)
                 {
-                    ImGuiInput.OnMouseWheel(wheel, 0f);
+                    io.MouseWheelH += wheel;   // horizontal
                 }
                 else
                 {
-                    ImGuiInput.OnMouseWheel(0f, wheel);
+                    io.MouseWheel += wheel;    // vertical
                 }
 
                 return new LRESULT(0);
