@@ -1,7 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using ImGuiNET;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using ImGuiNET;
 using Windows.Win32.Foundation;
 
 namespace Overlay_Renderer.Methods
@@ -21,7 +20,7 @@ namespace Overlay_Renderer.Methods
         ///<summary>
         ///Add a rectangle in ImGui/overlay client coordinates.
         ///</summary>
-        public static void AddRect(float x, float y , float width, float height)
+        public static void AddRect(float x, float y, float width, float height)
         {
             RECT rect = new()
             {
@@ -63,7 +62,7 @@ namespace Overlay_Renderer.Methods
                 overlay.SetHitTestRegions(ReadOnlySpan<RECT>.Empty);
                 return;
             }
-            
+
             // Clamp rects to overlay client size
             for (int i = 0; i < _regions.Count; i++)
             {
@@ -79,7 +78,7 @@ namespace Overlay_Renderer.Methods
 
                 _regions[i] = r;
             }
-            
+
             var span = CollectionsMarshal.AsSpan(_regions);
             overlay.SetHitTestRegions(span);
         }

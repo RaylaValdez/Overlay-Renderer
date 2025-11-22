@@ -4,14 +4,10 @@ namespace Overlay_Renderer.Methods
 {
     public static class ControllerInput
     {
-        private static DirectInput _directInput;
-        private static readonly List<Joystick> _devices = new();
-        private static readonly Dictionary<Guid, bool[]> _prevButtons = new();
+        private static DirectInput? _directInput;
+        private static readonly List<Joystick> _devices = [];
+        private static readonly Dictionary<Guid, bool[]> _prevButtons = [];
         private static readonly Queue<ControllerButton> _pressQueue = new();
-
-        private static ControllerButton _lastNonRepeatButton;
-        private static bool _hasLastNonRepeatButton = false;
-
 
         private static bool _initialized;
 
@@ -34,7 +30,7 @@ namespace Overlay_Renderer.Methods
                     _devices.Add(joystick);
 
                     var state = joystick.GetCurrentState();
-                    var buttons = state.Buttons ?? Array.Empty<bool>();
+                    var buttons = state.Buttons ?? [];
                     _prevButtons[deviceInstance.InstanceGuid] = (bool[])buttons.Clone();
                 }
                 catch (Exception)
@@ -52,7 +48,7 @@ namespace Overlay_Renderer.Methods
         ///</summary>
         public static void Update()
         {
-            if (!_initialized) 
+            if (!_initialized)
                 Initialize();
 
             foreach (var joystick in _devices)
@@ -61,7 +57,7 @@ namespace Overlay_Renderer.Methods
                 {
                     joystick.Poll();
                     var state = joystick.GetCurrentState();
-                    var buttons = state.Buttons ?? Array.Empty<bool>();
+                    var buttons = state.Buttons ?? [];
 
                     if (!_prevButtons.TryGetValue(joystick.Information.InstanceGuid, out var prev))
                     {
@@ -119,7 +115,7 @@ namespace Overlay_Renderer.Methods
                 {
                     joystick.Poll();
                     var state = joystick.GetCurrentState();
-                    var buttons = state.Buttons ?? Array.Empty<bool>();
+                    var buttons = state.Buttons ?? [];
 
                     if (binding.ButtonIndex < 0 || binding.ButtonIndex >= buttons.Length)
                         return false;

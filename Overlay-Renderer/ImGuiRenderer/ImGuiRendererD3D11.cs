@@ -1,8 +1,7 @@
-﻿using System.Drawing;
+﻿using ImGuiNET;
 using System.Drawing.Imaging;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using ImGuiNET;
 using Vortice.D3DCompiler;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
@@ -24,21 +23,21 @@ public sealed class ImGuiRendererD3D11 : IDisposable
     private readonly ID3D11Device _device;
     private readonly ID3D11DeviceContext _ctx;
 
-    private ID3D11Buffer _vb, _ib;
+    private ID3D11Buffer? _vb, _ib;
     private int _vbCap = InitialVertexCapacity, _ibCap = InitialIndexCapacity;
 
-    private ID3D11VertexShader _vs;
-    private ID3D11PixelShader _ps;
-    private ID3D11InputLayout _il;
-    private ID3D11SamplerState _sampler;
-    private ID3D11BlendState _blend;
-    private ID3D11RasterizerState _rast;
-    private ID3D11DepthStencilState _depth;
+    private ID3D11VertexShader? _vs;
+    private ID3D11PixelShader? _ps;
+    private ID3D11InputLayout? _il;
+    private ID3D11SamplerState? _sampler;
+    private ID3D11BlendState? _blend;
+    private ID3D11RasterizerState? _rast;
+    private ID3D11DepthStencilState? _depth;
 
-    private ID3D11ShaderResourceView _fontSRV;
+    private ID3D11ShaderResourceView? _fontSRV;
 
-    private ID3D11SamplerState _samplerLinear;
-    private ID3D11SamplerState _samplerPoint;
+    private ID3D11SamplerState? _samplerLinear;
+    private ID3D11SamplerState? _samplerPoint;
 
     private struct TexInfo
     {
@@ -48,7 +47,7 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         public bool Point;
     }
 
-    private readonly Dictionary<nint, TexInfo> _textures = new();
+    private readonly Dictionary<nint, TexInfo> _textures = [];
     private long _nextTexId = 2; // 1 is reserved for the font
 
     public ImGuiRendererD3D11(ID3D11Device device, ID3D11DeviceContext ctx)
@@ -66,7 +65,7 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         CreateDeviceObjects();
     }
 
-    public void NewFrame(int displayW, int displayH)
+    public static void NewFrame(int displayW, int displayH)
     {
         var io = ImGui.GetIO();
         io.DisplaySize = new Vector2(displayW, displayH);
@@ -135,7 +134,7 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         _ctx.IASetInputLayout(_il);
         _ctx.VSSetShader(_vs);
         _ctx.PSSetShader(_ps);
-        _ctx.PSSetSamplers(0, new[] { _samplerLinear });
+        _ctx.PSSetSamplers(0, [_samplerLinear!]);
         _ctx.OMSetBlendState(_blend, new Color4(0, 0, 0, 0), 0xFFFFFFFF);
         _ctx.RSSetState(_rast);
         _ctx.OMSetDepthStencilState(_depth, 0);
@@ -168,7 +167,7 @@ public sealed class ImGuiRendererD3D11 : IDisposable
 
                 if (id == new nint(ImGuiFontTextureId) || !_textures.TryGetValue(id, out var ti))
                 {
-                    srvToBind = _fontSRV;
+                    srvToBind = _fontSRV!;
                     usePoint = false;
                 }
                 else
@@ -178,7 +177,7 @@ public sealed class ImGuiRendererD3D11 : IDisposable
                 }
 
                 _ctx.PSSetShaderResource(0, srvToBind);
-                _ctx.PSSetSamplers(0, new[] { usePoint ? _samplerPoint : _samplerLinear });
+                _ctx.PSSetSamplers(0, [usePoint ? _samplerPoint! : _samplerLinear!]);
 
 
                 _ctx.DrawIndexed(cmd.ElemCount, (uint)idxOfs, vtxOfs);
@@ -249,8 +248,8 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         sampler s0; Texture2D t0;
         float4 main(PS_IN i):SV_Target { float4 c = i.col * t0.Sample(s0, i.uv); c.rgb *= c.a; return c; }";
 
-        var vsBytes = Compiler.Compile(vs, null, "main", "imgui_vs", "vs_5_0", ShaderFlags.OptimizationLevel3, EffectFlags.None);
-        var psBytes = Compiler.Compile(ps, null, "main", "imgui_ps", "ps_5_0", ShaderFlags.OptimizationLevel3, EffectFlags.None);
+        var vsBytes = Compiler.Compile(vs, "main", "imgui_vs", "vs_5_0", ShaderFlags.OptimizationLevel3, EffectFlags.None);
+        var psBytes = Compiler.Compile(ps, "main", "imgui_ps", "ps_5_0", ShaderFlags.OptimizationLevel3, EffectFlags.None);
 
         _vs = _device.CreateVertexShader(vsBytes.Span);
         _ps = _device.CreatePixelShader(psBytes.Span);
@@ -279,7 +278,7 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         var rtb = new RenderTargetBlendDescription
         {
             BlendEnable = true,
-            SourceBlend = Blend.One,                  
+            SourceBlend = Blend.One,
             DestinationBlend = Blend.InverseSourceAlpha,
             BlendOperation = BlendOperation.Add,
             SourceBlendAlpha = Blend.One,
@@ -303,7 +302,8 @@ public sealed class ImGuiRendererD3D11 : IDisposable
             AddressV = TextureAddressMode.Wrap,
             AddressW = TextureAddressMode.Wrap,
             ComparisonFunc = ComparisonFunction.Never,
-            MinLOD = 0, MaxLOD = float.MaxValue
+            MinLOD = 0,
+            MaxLOD = float.MaxValue
         });
 
         _samplerPoint = _device.CreateSamplerState(new SamplerDescription()

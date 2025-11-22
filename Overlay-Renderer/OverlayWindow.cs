@@ -1,13 +1,9 @@
 using Overlay_Renderer.Helpers;
 using Overlay_Renderer.Methods;
-using System.Collections.Generic;
-using System.Drawing;
 using System.Runtime.InteropServices;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Dwm;
-using Windows.Win32.UI.Input.KeyboardAndMouse;
-using Windows.Win32.UI.Shell;
 using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Overlay_Renderer;

@@ -1,7 +1,6 @@
-﻿using System;
+﻿using Overlay_Renderer.ImGuiRenderer;
 using System.Collections.Concurrent;
-using System.Drawing;
-using Overlay_Renderer.ImGuiRenderer;
+using System.Net.Http;
 
 namespace Overlay_Renderer.Methods
 {
@@ -65,8 +64,7 @@ namespace Overlay_Renderer.Methods
             await using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
             using var bmp = new Bitmap(stream);
 
-            int w, h;
-            var id = _renderer.CreateTextureFromBitmap(bmp, out w, out h);
+            var id = _renderer.CreateTextureFromBitmap(bmp, out int w, out int h);
 
             _urlCache[url] = id;
             return id;

@@ -1,6 +1,5 @@
 ﻿using Microsoft.Web.WebView2.Core;
 using Overlay_Renderer.Helpers;
-using System.Drawing;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace Overlay_Renderer.Methods
@@ -48,7 +47,7 @@ namespace Overlay_Renderer.Methods
         delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 
         [DllImport("user32.dll")]
-        static extern bool EnumWindows(EnumWindowsProc lpEnumFunc,  IntPtr lParam);
+        static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
 
         [DllImport("user32.dll")]
         static extern bool IsWindowVisible(IntPtr hWnd);

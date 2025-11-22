@@ -2,7 +2,6 @@
 using Overlay_Renderer.Helpers;
 using System.Numerics;
 using Windows.Win32.Foundation;
-using System;
 
 namespace Overlay_Renderer.Methods
 {

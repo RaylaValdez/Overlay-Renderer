@@ -1,5 +1,4 @@
 ﻿using ImGuiNET;
-using System.Drawing;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -10,7 +9,7 @@ namespace Overlay_Renderer.Methods
 {
     public static class ImGuiInput
     {
-        public static bool _useOsCursor = false;
+        private static bool _useOsCursor = false;
 
         [DllImport("user32.dll", EntryPoint = "LoadCursor", CharSet = CharSet.Unicode)]
         private static extern IntPtr LoadCursor(IntPtr hInstance, int lpCursorName);
@@ -48,11 +47,10 @@ namespace Overlay_Renderer.Methods
         // Mouse Wheel State (per frame)
         private static float _pendingWheelY;
         private static float _pendingWheelX;
-        private static float _pendingWheel;
 
         // Keyboard States
         private static readonly (VIRTUAL_KEY vk, ImGuiKey key)[] KeyMap =
-        {
+        [
             (VIRTUAL_KEY.VK_TAB,    ImGuiKey.Tab),
             (VIRTUAL_KEY.VK_LEFT,   ImGuiKey.LeftArrow),
             (VIRTUAL_KEY.VK_RIGHT,  ImGuiKey.RightArrow),
@@ -123,19 +121,19 @@ namespace Overlay_Renderer.Methods
             (VIRTUAL_KEY.VK_F11, ImGuiKey.F11),
             (VIRTUAL_KEY.VK_F12, ImGuiKey.F12),
 
-            (VIRTUAL_KEY.VK_OEM_1,   ImGuiKey.Semicolon),      
-            (VIRTUAL_KEY.VK_OEM_PLUS, ImGuiKey.Equal),         
-            (VIRTUAL_KEY.VK_OEM_COMMA, ImGuiKey.Comma),        
-            (VIRTUAL_KEY.VK_OEM_MINUS, ImGuiKey.Minus),        
-            (VIRTUAL_KEY.VK_OEM_PERIOD, ImGuiKey.Period),      
-            (VIRTUAL_KEY.VK_OEM_2,   ImGuiKey.Slash),          
-            (VIRTUAL_KEY.VK_OEM_3,   ImGuiKey.GraveAccent),    
-            (VIRTUAL_KEY.VK_OEM_4,   ImGuiKey.LeftBracket),    
-            (VIRTUAL_KEY.VK_OEM_5,   ImGuiKey.Backslash),      
-            (VIRTUAL_KEY.VK_OEM_6,   ImGuiKey.RightBracket),   
-            (VIRTUAL_KEY.VK_OEM_7,   ImGuiKey.Apostrophe),     
-            
-        };
+            (VIRTUAL_KEY.VK_OEM_1,   ImGuiKey.Semicolon),
+            (VIRTUAL_KEY.VK_OEM_PLUS, ImGuiKey.Equal),
+            (VIRTUAL_KEY.VK_OEM_COMMA, ImGuiKey.Comma),
+            (VIRTUAL_KEY.VK_OEM_MINUS, ImGuiKey.Minus),
+            (VIRTUAL_KEY.VK_OEM_PERIOD, ImGuiKey.Period),
+            (VIRTUAL_KEY.VK_OEM_2,   ImGuiKey.Slash),
+            (VIRTUAL_KEY.VK_OEM_3,   ImGuiKey.GraveAccent),
+            (VIRTUAL_KEY.VK_OEM_4,   ImGuiKey.LeftBracket),
+            (VIRTUAL_KEY.VK_OEM_5,   ImGuiKey.Backslash),
+            (VIRTUAL_KEY.VK_OEM_6,   ImGuiKey.RightBracket),
+            (VIRTUAL_KEY.VK_OEM_7,   ImGuiKey.Apostrophe),
+
+        ];
 
         private static readonly bool[] KeyDown = new bool[KeyMap.Length];
         private static readonly double[] KeyNextRepeatTime = new double[KeyMap.Length];
@@ -344,49 +342,20 @@ namespace Overlay_Renderer.Methods
                 return;
             }
 
-            IntPtr hCursor = IntPtr.Zero;
+            IntPtr hCursor;
 
-            switch (imguiCursor)
+            hCursor = imguiCursor switch
             {
-                default:
-                case ImGuiMouseCursor.Arrow:
-                    hCursor = LoadCursor(IntPtr.Zero, IDC_ARROW);
-                    break;
-
-                case ImGuiMouseCursor.TextInput:
-                    hCursor = LoadCursor(IntPtr.Zero, IDC_IBEAM);
-                    break;
-
-                case ImGuiMouseCursor.ResizeAll:
-                    hCursor = LoadCursor(IntPtr.Zero, IDC_SIZEALL);
-                    break;
-
-                case ImGuiMouseCursor.ResizeNS:
-                    hCursor = LoadCursor(IntPtr.Zero, IDC_SIZENS);
-                    break;
-
-                case ImGuiMouseCursor.ResizeEW:
-                    hCursor = LoadCursor(IntPtr.Zero, IDC_SIZEWE);
-                    break;
-
-                case ImGuiMouseCursor.ResizeNESW:
-                    hCursor = LoadCursor(IntPtr.Zero, IDC_SIZENESW);
-                    break;
-
-                case ImGuiMouseCursor.ResizeNWSE:
-                    hCursor = LoadCursor(IntPtr.Zero, IDC_SIZENWSE);
-                    break;
-
-                case ImGuiMouseCursor.Hand:
-                    hCursor = LoadCursor(IntPtr.Zero, IDC_HAND);
-                    break;
-
-                case ImGuiMouseCursor.NotAllowed:
-                    // No perfect stock cursor; arrow is usually fine, or you can pick something else.
-                    hCursor = LoadCursor(IntPtr.Zero, IDC_ARROW);
-                    break;
-            }
-
+                ImGuiMouseCursor.TextInput => LoadCursor(IntPtr.Zero, IDC_IBEAM),
+                ImGuiMouseCursor.ResizeAll => LoadCursor(IntPtr.Zero, IDC_SIZEALL),
+                ImGuiMouseCursor.ResizeNS => LoadCursor(IntPtr.Zero, IDC_SIZENS),
+                ImGuiMouseCursor.ResizeEW => LoadCursor(IntPtr.Zero, IDC_SIZEWE),
+                ImGuiMouseCursor.ResizeNESW => LoadCursor(IntPtr.Zero, IDC_SIZENESW),
+                ImGuiMouseCursor.ResizeNWSE => LoadCursor(IntPtr.Zero, IDC_SIZENWSE),
+                ImGuiMouseCursor.Hand => LoadCursor(IntPtr.Zero, IDC_HAND),
+                ImGuiMouseCursor.NotAllowed => LoadCursor(IntPtr.Zero, IDC_ARROW),// No perfect stock cursor; arrow is usually fine, or you can pick something else.
+                _ => LoadCursor(IntPtr.Zero, IDC_ARROW),
+            };
             if (hCursor != IntPtr.Zero)
             {
                 SetCursor(hCursor);

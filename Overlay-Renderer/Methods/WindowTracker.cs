@@ -1,5 +1,4 @@
-﻿using System.Drawing;
-using Windows.Win32;
+﻿using Windows.Win32;
 using Windows.Win32.Foundation;
 
 namespace Overlay_Renderer.Methods
@@ -61,7 +60,7 @@ namespace Overlay_Renderer.Methods
             }, token);
         }
         private static bool RectsEqual(RECT a, RECT b) =>
-            a.left == b.left && a.top == b.top && 
+            a.left == b.left && a.top == b.top &&
             a.right == b.right && a.bottom == b.bottom;
     }
 }

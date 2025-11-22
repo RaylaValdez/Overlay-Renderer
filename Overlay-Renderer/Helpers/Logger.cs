@@ -1,8 +1,10 @@
-﻿namespace Overlay_Renderer.Helpers
+﻿using System.IO;
+
+namespace Overlay_Renderer.Helpers
 {
     public static class Logger
     {
-        private static readonly object _lock = new();
+        private static readonly Lock _lock = new();
         private static StreamWriter? _logFile;
         private static bool _initialized;
         private static string _logPath = string.Empty;

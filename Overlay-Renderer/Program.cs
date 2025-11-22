@@ -1,8 +1,8 @@
 ﻿using ImGuiNET;
-using System.Numerics;
 using Overlay_Renderer.Helpers;
 using Overlay_Renderer.ImGuiRenderer;
 using Overlay_Renderer.Methods;
+using System.Numerics;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.WindowsAndMessaging;
@@ -102,12 +102,11 @@ namespace Overlay_Renderer
             ImGuiRendererD3D11 imguiRenderer,
             CancellationTokenSource cts)
         {
-            MSG msg;
 
             while (!cts.IsCancellationRequested)
             {
                 // Pump Win32 messages
-                while (PInvoke.PeekMessage(out msg, HWND.Null, 0, 0,
+                while (PInvoke.PeekMessage(out MSG msg, HWND.Null, 0, 0,
                     PEEK_MESSAGE_REMOVE_TYPE.PM_REMOVE))
                 {
                     if (msg.message == PInvoke.WM_QUIT)
@@ -128,7 +127,7 @@ namespace Overlay_Renderer
 
                 // Render Frame
                 d3dHost.BeginFrame();
-                imguiRenderer.NewFrame(overlay.ClientWidth, overlay.ClientHeight);
+                ImGuiRendererD3D11.NewFrame(overlay.ClientWidth, overlay.ClientHeight);
 
                 ImGuiInput.UpdateMouse(overlay);
                 ImGuiInput.UpdateKeyboard();
@@ -137,7 +136,7 @@ namespace Overlay_Renderer
                 DrawDemoUi();
                 HitTestRegions.ApplyToOverlay(overlay);
 
-                imguiRenderer.Render(d3dHost.SwapChain);
+                imguiRenderer.Render(d3dHost.SwapChain!);
                 d3dHost.Present();
 
                 Thread.Sleep(1);
@@ -146,17 +145,6 @@ namespace Overlay_Renderer
 
         private static void DrawDemoUi()
         {
-            var io = ImGui.GetIO();
-            var bg = ImGui.GetBackgroundDrawList();
-
-            uint tintColor = ImGui.ColorConvertFloat4ToU32(new Vector4(0f, 0f, 0f, 0.35f));
-
-            //bg.AddRectFilled(
-            //    new Vector2(0, 0),
-            //    io.DisplaySize,
-            //    tintColor
-            //);
-
             ImGui.Begin("Overlay Demo");
             ImGui.SetWindowPos(new Vector2(10, 10), ImGuiCond.Once);
             HitTestRegions.AddCurrentWindow();
