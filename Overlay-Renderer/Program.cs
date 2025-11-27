@@ -15,9 +15,8 @@ namespace Overlay_Renderer
         [STAThread]
         private static void Main(string[] args)
         {
-            //Logger.Info("Overlay-Renderer starting...");
+            Logger.Info("Overlay-Renderer starting...");
 
-            // Get process name: arg0 or ask user
             string processName;
             if (args.Length > 0)
             {
@@ -25,7 +24,7 @@ namespace Overlay_Renderer
             }
             else
             {
-                //Logger.Info("Enter target process name (without .exe): ");
+                Logger.Info("Enter target process name (without .exe): ");
                 processName = Console.ReadLine()?.Trim() ?? string.Empty;
             }
 
@@ -35,7 +34,7 @@ namespace Overlay_Renderer
                 return;
             }
 
-            //Logger.Info($"Waiting for main window of process '{processName}'...");
+            Logger.Info($"Waiting for main window of process '{processName}'...");
             var hwndIntPtr = FindProcess.WaitForMainWindow(processName, retries: 20, delayMs: 500);
 
             if (hwndIntPtr == IntPtr.Zero)
@@ -47,7 +46,7 @@ namespace Overlay_Renderer
             var targetHwnd = new HWND(hwndIntPtr);
             unsafe
             {
-                //Logger.Info($"Attached to window 0x{(nuint)targetHwnd.Value:X}");
+                Logger.Info($"Attached to window 0x{(nuint)targetHwnd.Value:X}");
             }
 
             using var overlay = new OverlayWindow(targetHwnd);
@@ -71,7 +70,6 @@ namespace Overlay_Renderer
 
             var cts = new CancellationTokenSource();
 
-            // Track target window, keeping overlay aligned and resizing when needed.
             bool firstSize = true;
             var trackingTask = WindowTracker.StartTrackingAsync(
                 targetHwnd,
@@ -91,9 +89,9 @@ namespace Overlay_Renderer
             RunMessageAndRenderLoop(overlay, d3dHost, imguiRenderer, cts);
 
             cts.Cancel();
-            try { trackingTask.Wait(500); } catch { /* ignore */ }
+            try { trackingTask.Wait(500); } catch {}
 
-            //Logger.Info("Overlay-Renderer shutting down.");
+            Logger.Info("Overlay-Renderer shutting down.");
         }
 
         private static void RunMessageAndRenderLoop(
@@ -105,7 +103,6 @@ namespace Overlay_Renderer
 
             while (!cts.IsCancellationRequested)
             {
-                // Pump Win32 messages
                 while (PInvoke.PeekMessage(out MSG msg, HWND.Null, 0, 0,
                     PEEK_MESSAGE_REMOVE_TYPE.PM_REMOVE))
                 {
@@ -125,7 +122,6 @@ namespace Overlay_Renderer
                     return;
                 }
 
-                // Render Frame
                 d3dHost.BeginFrame();
                 ImGuiRendererD3D11.NewFrame(overlay.ClientWidth, overlay.ClientHeight);
 

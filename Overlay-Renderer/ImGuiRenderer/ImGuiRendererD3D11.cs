@@ -48,7 +48,7 @@ public sealed class ImGuiRendererD3D11 : IDisposable
     }
 
     private readonly Dictionary<nint, TexInfo> _textures = [];
-    private long _nextTexId = 2; // 1 is reserved for the font
+    private long _nextTexId = 2;
 
     public ImGuiRendererD3D11(ID3D11Device device, ID3D11DeviceContext ctx)
     {
@@ -79,7 +79,6 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         var dd = ImGui.GetDrawData();
         if (dd.CmdListsCount == 0) return;
 
-        // ensure buffers
         if (_vb == null || _vbCap < dd.TotalVtxCount)
         {
             _vb?.Dispose();
@@ -93,7 +92,6 @@ public sealed class ImGuiRendererD3D11 : IDisposable
             _ib = _device.CreateBuffer(new BufferDescription((uint)(_ibCap * sizeof(ushort)), BindFlags.IndexBuffer, ResourceUsage.Dynamic, CpuAccessFlags.Write));
         }
 
-        // upload
         var mv = _ctx.Map(_vb, 0, MapMode.WriteDiscard);
         var mi = _ctx.Map(_ib, 0, MapMode.WriteDiscard);
         unsafe
@@ -117,7 +115,6 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         _ctx.Unmap(_vb, 0);
         _ctx.Unmap(_ib, 0);
 
-        // viewport
         var vp = new Viewport(0, 0, dd.DisplaySize.X, dd.DisplaySize.Y, 0, 1);
         _ctx.RSSetViewports(new[] { vp });
 
@@ -125,7 +122,6 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         using var rtv = _device.CreateRenderTargetView(bb);
         _ctx.OMSetRenderTargets(rtv, null);
 
-        // ortho
         var dp = dd.DisplayPos;
         var ds = dd.DisplaySize;
         var proj = Matrix4x4.CreateOrthographicOffCenter(dp.X, dp.X + ds.X, dp.Y + ds.Y, dp.Y, -1, 1);

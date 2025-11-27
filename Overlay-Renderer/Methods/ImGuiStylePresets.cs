@@ -10,7 +10,6 @@ namespace Overlay_Renderer.Methods
             var style = ImGui.GetStyle();
             var colors = style.Colors;
 
-            // Base dark mode (ImGui default but tweaked)
             style.WindowRounding = 12f;
             style.FrameRounding = 8f;
             style.ScrollbarRounding = 12f;

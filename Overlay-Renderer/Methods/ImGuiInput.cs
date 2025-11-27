@@ -34,7 +34,6 @@ namespace Overlay_Renderer.Methods
 
         private const uint MAPVK_VK_TO_VSC = 0;
 
-        // Standard Cursor ID's
         private const int IDC_ARROW = 32512;
         private const int IDC_IBEAM = 32513;
         private const int IDC_HAND = 32649;
@@ -44,11 +43,9 @@ namespace Overlay_Renderer.Methods
         private const int IDC_SIZENS = 32645;
         private const int IDC_SIZEWE = 32644;
 
-        // Mouse Wheel State (per frame)
         private static float _pendingWheelY;
         private static float _pendingWheelX;
 
-        // Keyboard States
         private static readonly (VIRTUAL_KEY vk, ImGuiKey key)[] KeyMap =
         [
             (VIRTUAL_KEY.VK_TAB,    ImGuiKey.Tab),
@@ -107,7 +104,6 @@ namespace Overlay_Renderer.Methods
             (VIRTUAL_KEY.VK_Y, ImGuiKey.Y),
             (VIRTUAL_KEY.VK_Z, ImGuiKey.Z),
 
-            // Function keys (add more if you like)
             (VIRTUAL_KEY.VK_F1, ImGuiKey.F1),
             (VIRTUAL_KEY.VK_F2, ImGuiKey.F2),
             (VIRTUAL_KEY.VK_F3, ImGuiKey.F3),
@@ -147,7 +143,6 @@ namespace Overlay_Renderer.Methods
         {
             var io = ImGui.GetIO();
 
-            // If overlay window is not created yet, mark mouse as outside
             if (overlay.Hwnd.IsNull)
             {
                 io.MousePos = new Vector2(-1, -1);
@@ -157,21 +152,17 @@ namespace Overlay_Renderer.Methods
                 return;
             }
 
-            // Get cursor in screen coords
             PInvoke.GetCursorPos(out Point ptScreen);
 
-            // Convert to overlay coords
             var ptClient = new Point { X = ptScreen.X, Y = ptScreen.Y };
             PInvoke.ScreenToClient(overlay.Hwnd, ref ptClient);
 
             io.MousePos = new Vector2(ptClient.X, ptClient.Y);
 
-            // Button states (global) - works regardless of which window has focus
             io.MouseDown[0] = (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_LBUTTON) & 0x8000) != 0;
             io.MouseDown[1] = (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_RBUTTON) & 0x8000) != 0;
             io.MouseDown[2] = (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_MBUTTON) & 0x8000) != 0;
 
-            // New input system: feed modifier *keys* as well
             io.AddKeyEvent(ImGuiKey.ModCtrl, io.KeyCtrl);
             io.AddKeyEvent(ImGuiKey.ModShift, io.KeyShift);
             io.AddKeyEvent(ImGuiKey.ModAlt, io.KeyAlt);
@@ -179,7 +170,6 @@ namespace Overlay_Renderer.Methods
 
 
 
-            // Apply wheel accumulated from WndProc
             io.AddMouseWheelEvent(_pendingWheelX, _pendingWheelY);
             _pendingWheelY = 0;
             _pendingWheelX = 0;
@@ -193,7 +183,6 @@ namespace Overlay_Renderer.Methods
         {
             var io = ImGui.GetIO();
 
-            // Modifiers (global)
             bool keyCtrl = (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_CONTROL) & 0x8000) != 0;
             bool keyShift = (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_SHIFT) & 0x8000) != 0;
             bool keyAlt = (PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_MENU) & 0x8000) != 0;
@@ -219,7 +208,6 @@ namespace Overlay_Renderer.Methods
                 var (vk, key) = KeyMap[i];
                 bool downNow = (PInvoke.GetAsyncKeyState((int)vk) & 0x8000) != 0;
 
-                // Edge change -> send key event
                 if (downNow != KeyDown[i])
                 {
                     KeyDown[i] = downNow;
@@ -227,23 +215,19 @@ namespace Overlay_Renderer.Methods
 
                     if (downNow && IsTextKey(vk))
                     {
-                        // Immediate first char
                         string chars = TranslateVkToChars(vk);
                         foreach (char ch in chars)
                             io.AddInputCharacter(ch);
 
-                        // Schedule first repeat
                         KeyNextRepeatTime[i] = now + repeatDelay;
                     }
                     else
                     {
-                        // Key released: stop repeat
                         KeyNextRepeatTime[i] = 0.0;
                     }
                 }
                 else if (downNow && IsTextKey(vk))
                 {
-                    // Held: handle repeats
                     if (now >= KeyNextRepeatTime[i] && KeyNextRepeatTime[i] > 0.0)
                     {
                         string chars = TranslateVkToChars(vk);
@@ -353,7 +337,7 @@ namespace Overlay_Renderer.Methods
                 ImGuiMouseCursor.ResizeNESW => LoadCursor(IntPtr.Zero, IDC_SIZENESW),
                 ImGuiMouseCursor.ResizeNWSE => LoadCursor(IntPtr.Zero, IDC_SIZENWSE),
                 ImGuiMouseCursor.Hand => LoadCursor(IntPtr.Zero, IDC_HAND),
-                ImGuiMouseCursor.NotAllowed => LoadCursor(IntPtr.Zero, IDC_ARROW),// No perfect stock cursor; arrow is usually fine, or you can pick something else.
+                ImGuiMouseCursor.NotAllowed => LoadCursor(IntPtr.Zero, IDC_ARROW),
                 _ => LoadCursor(IntPtr.Zero, IDC_ARROW),
             };
             if (hCursor != IntPtr.Zero)
@@ -403,19 +387,16 @@ namespace Overlay_Renderer.Methods
 
         private static bool IsTextKey(VIRTUAL_KEY vk)
         {
-            // Numbers, letters, space
             if (vk >= VIRTUAL_KEY.VK_0 && vk <= VIRTUAL_KEY.VK_9) return true;
             if (vk >= VIRTUAL_KEY.VK_A && vk <= VIRTUAL_KEY.VK_Z) return true;
             if (vk == VIRTUAL_KEY.VK_SPACE) return true;
 
-            // OEM punctuation
             if (vk >= VIRTUAL_KEY.VK_OEM_1 && vk <= VIRTUAL_KEY.VK_OEM_7) return true;
             if (vk == VIRTUAL_KEY.VK_OEM_PLUS ||
                 vk == VIRTUAL_KEY.VK_OEM_COMMA ||
                 vk == VIRTUAL_KEY.VK_OEM_MINUS ||
                 vk == VIRTUAL_KEY.VK_OEM_PERIOD) return true;
 
-            // Numpad digits and basic ops
             if (vk >= VIRTUAL_KEY.VK_NUMPAD0 && vk <= VIRTUAL_KEY.VK_NUMPAD9) return true;
             if (vk == VIRTUAL_KEY.VK_DECIMAL ||
                 vk == VIRTUAL_KEY.VK_ADD ||

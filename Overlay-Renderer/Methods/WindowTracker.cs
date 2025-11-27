@@ -21,14 +21,22 @@ namespace Overlay_Renderer.Methods
                     if (targetHwnd.IsNull || !PInvoke.IsWindow(targetHwnd))
                         break;
 
-                    // Get client rect in client coords
+                    var fg = PInvoke.GetForegroundWindow();
+                    bool isTargetForeground = fg == targetHwnd;
+                    bool isOverlayForeground = fg == overlay.Hwnd;
+                    bool isMinimized = PInvoke.IsIconic(targetHwnd);
+
+                    bool shouldShow = !isMinimized && (isTargetForeground || isOverlayForeground);
+
+                    if (overlay.Visible != shouldShow)
+                        overlay.Visible = shouldShow;
+
                     if (!PInvoke.GetClientRect(targetHwnd, out RECT clientRect))
                     {
                         Thread.Sleep(50);
                         continue;
                     }
 
-                    // Converting to screen coords
                     var topLeft = new Point { X = clientRect.left, Y = clientRect.top };
                     var bottomRight = new Point { X = clientRect.right, Y = clientRect.bottom };
                     PInvoke.ClientToScreen(targetHwnd, ref topLeft);
@@ -47,7 +55,6 @@ namespace Overlay_Renderer.Methods
                         hasLast = true;
                         lastRect = screenRect;
 
-                        // Follow Window
                         overlay.UpdateBounds(screenRect);
 
                         int width = screenRect.right - screenRect.left;
@@ -59,6 +66,7 @@ namespace Overlay_Renderer.Methods
                 }
             }, token);
         }
+
         private static bool RectsEqual(RECT a, RECT b) =>
             a.left == b.left && a.top == b.top &&
             a.right == b.right && a.bottom == b.bottom;

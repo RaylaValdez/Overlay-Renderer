@@ -81,3 +81,5 @@ DragQueryPoint
 DragQueryFile
 DragFinish
 GET_WHEEL_DELTA_WPARAM
+WM_NCMOUSEMOVE
+WM_MOUSEMOVE

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Web.WebView2.Core;
 using Overlay_Renderer.Helpers;
+using System.IO;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -97,10 +98,14 @@ namespace Overlay_Renderer.Methods
 
             try
             {
-                //Logger.Info("[WebViewSurface] Creating WebView2 environment (per-surface).");
-                _env = await CoreWebView2Environment.CreateAsync();
+                string userData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Starboard", "WebView2");
 
-                //Logger.Info("[WebViewSurface] Creating WebView2 controller (HWND host).");
+                Directory.CreateDirectory(userData);
+
+                _env = await CoreWebView2Environment.CreateAsync(
+                            browserExecutableFolder: null,
+                            userDataFolder: userData,
+                            options: null);
                 _controller = await _env.CreateCoreWebView2ControllerAsync(_parentHwnd);
                 _core = _controller.CoreWebView2;
 
@@ -124,7 +129,6 @@ namespace Overlay_Renderer.Methods
 
                 _initialized = true;
                 _initFailed = false;
-                //Logger.Info("[WebViewSurface] WebView2 surface initialized.");
             }
             catch (Exception ex)
             {
@@ -142,24 +146,19 @@ namespace Overlay_Renderer.Methods
 
             try
             {
-                // Show/hide the WebView window
                 _controller.IsVisible = active;
 
                 if (_core != null)
                 {
-                    // 1) Hard mute when inactive, unmute when active
                     _core.IsMuted = !active;
 
-                    // 2) Virtual time policy, like you already had
                     string policy = active ? "advance" : "pause";
                     _core.CallDevToolsProtocolMethodAsync(
                         "Emulation.setVirtualTimePolicy",
                         $"{{\"policy\":\"{policy}\"}}");
 
-                    // 3) Proactively pause media when deactivating
                     if (!active)
                     {
-                        // Best-effort JS: pause all <video>/<audio> and mute them
                         const string pauseMediaJs = @"
                             try {
                                 const media = document.querySelectorAll('video,audio');
@@ -177,7 +176,6 @@ namespace Overlay_Renderer.Methods
                     }
                     else
                     {
-                        // Optional: unmute elements again when reactivating
                         const string unmuteMediaJs = @"
                             try {
                                 const media = document.querySelectorAll('video,audio');
@@ -208,7 +206,6 @@ namespace Overlay_Renderer.Methods
             _lastUrl = url;
             try
             {
-                //Logger.Info($"[WebViewSurface] navigating to {url}");
                 _core.Navigate(url);
             }
             catch (Exception ex)
@@ -217,9 +214,6 @@ namespace Overlay_Renderer.Methods
             }
         }
 
-        /// <summary>
-        /// Can the embedded browser navigate back?
-        /// </summary>
         public bool CanGoBack
         {
             get
@@ -235,9 +229,6 @@ namespace Overlay_Renderer.Methods
             }
         }
 
-        /// <summary>
-        /// Navigate back in the embedded browser, if possible.
-        /// </summary>
         public void GoBack()
         {
             try
@@ -253,11 +244,6 @@ namespace Overlay_Renderer.Methods
             }
         }
 
-        /// <summary>
-        /// Position and size the WebView to cover the given ImGui rect.
-        /// imageMinClient is in *overlay client coordinates* (ImGui main viewport).
-        /// drawSize is the pixel size of the desired area.
-        /// </summary>
         public void UpdateBounds(Vector2 imageMinClient, Vector2 drawSize)
         {
             if (!_initialized || _controller == null)
@@ -289,9 +275,6 @@ namespace Overlay_Renderer.Methods
             EnsureCursorHook();
         }
 
-        // -----------------------------
-        // Cursor suppression hook
-        // -----------------------------
         private async Task HookChildForCursorAsync()
         {
             try
@@ -304,8 +287,6 @@ namespace Overlay_Renderer.Methods
                     Logger.Warn("[WebViewSurface] HookChildForCursorAsync: parent HWND is 0.");
                     return;
                 }
-
-                //Logger.Info("[WebViewSurface] Enumerating child windows of overlay for cursor hook...");
 
                 IntPtr topLevel = IntPtr.Zero;
                 var sb = new StringBuilder(256);
@@ -322,7 +303,6 @@ namespace Overlay_Renderer.Methods
 
                     if (loggedCount < 10)
                     {
-                        //Logger.Info($"[WebViewSurface] Child HWND=0x{hwnd.ToInt64():X}, class='{cls}'");
                         loggedCount++;
                     }
 
@@ -359,7 +339,6 @@ namespace Overlay_Renderer.Methods
 
                     if (loggedCount < 20)
                     {
-                        //Logger.Info($"[WebViewSurface]   Sub-child HWND=0x{hwnd.ToInt64():X}, class='{cls}'");
                         loggedCount++;
                     }
 
@@ -368,7 +347,7 @@ namespace Overlay_Renderer.Methods
                         cls.Contains("Chrome_WidgetWin", StringComparison.OrdinalIgnoreCase))
                     {
                         renderChild = hwnd;
-                        return false; // good enough
+                        return false;
                     }
 
                     return true;
@@ -416,13 +395,11 @@ namespace Overlay_Renderer.Methods
 
                 if (prev == IntPtr.Zero && err != 0)
                 {
-                    //Logger.Warn($"[WebViewSurface] GetWindowLongPtr(GWLP_WNDPROC) failed for hwnd=0x{hwnd.ToInt64():X}, error={err}");
                     return false;
                 }
 
                 if (prev == hookPtr)
                 {
-                    //Logger.Info($"[WebViewSurface] hwnd=0x{hwnd.ToInt64():X} already subclassed; keeping existing old proc.");
                     _webViewHwnd = hwnd;
                     _cursorHookInstalled = true;
                     return true;
@@ -439,13 +416,11 @@ namespace Overlay_Renderer.Methods
 
                 if (res == IntPtr.Zero && err != 0)
                 {
-                    //Logger.Warn($"[WebViewSurface] SetWindowLongPtr(GWLP_WNDPROC) failed for hwnd=0x{hwnd.ToInt64():X}, error={err}");
                     return false;
                 }
 
                 sb.Clear();
                 GetClassName(hwnd, sb, sb.Capacity);
-                //Logger.Info($"[WebViewSurface] Subclassed WebView child hwnd=0x{hwnd.ToInt64():X}, class='{sb}' to suppress WM_SETCURSOR.");
 
                 _webViewHwnd = hwnd;
                 _cursorHookInstalled = true;
@@ -453,13 +428,10 @@ namespace Overlay_Renderer.Methods
             }
         }
 
-
-
         private IntPtr WebViewWndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
         {
             if (msg == WM_SETCURSOR)
             {
-                //Logger.Info($"[WebViewSurface] WM_SETCURSOR blocked for hwnd=0x{hWnd.ToInt64():X}");
                 return new IntPtr(1);
             }
 
@@ -473,12 +445,6 @@ namespace Overlay_Renderer.Methods
             return DefWindowProc(hWnd, msg, wParam, lParam);
         }
 
-
-        /// <summary>
-        /// Ensure that we still have a valid subclass on a WebView child window.
-        /// If the hwnd disappeared or was never hooked, re-run the hook logic (throttled).
-        /// Call this from a per-frame path (e.g. UpdateBounds).
-        /// </summary>
         private void EnsureCursorHook()
         {
             if (!_initialized || _initFailed)
@@ -511,12 +477,10 @@ namespace Overlay_Renderer.Methods
                 if (_webViewHwnd != IntPtr.Zero && _webViewOldWndProc != IntPtr.Zero)
                 {
                     SetWindowLongPtrSafe(_webViewHwnd, GWLP_WNDPROC, _webViewOldWndProc);
-                    //Logger.Info($"[WebViewSurface] Restored original WndProc for WebView HWND=0x{_webViewHwnd.ToInt64():X}.");
                 }
             }
             catch
             {
-                // ignore
             }
 
             _webViewHwnd = IntPtr.Zero;
@@ -535,7 +499,6 @@ namespace Overlay_Renderer.Methods
             }
             catch
             {
-                // ignore
             }
         }
     }

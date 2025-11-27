@@ -10,7 +10,6 @@ namespace Overlay_Renderer.Methods
         private static HWND _overlayHwnd;
         private static bool _initialized;
 
-        // One WebViewSurface per applet
         private static readonly Dictionary<string, WebViewSurface> _surfaces = new();
         private static readonly Dictionary<string, Task> _initTasks = new();
 
@@ -67,13 +66,11 @@ namespace Overlay_Renderer.Methods
             var s = new WebViewSurface(_overlayHwnd);
             _surfaces[appletId] = s;
 
-            // If this applet is the currently active one, make the surface active
             if (_activeAppletId == null || _activeAppletId == appletId)
             {
                 s.SetActive(true);
             }
 
-            // start async init
             var initTask = s.InitializeAsync();
             _initTasks[appletId] = initTask;
 
@@ -101,9 +98,6 @@ namespace Overlay_Renderer.Methods
             surf.NavigateIfNeeded(url);
         }
 
-        // ----------------------------
-        // BACK SUPPORT FOR ACTIVE APP
-        // ----------------------------
         public static bool ActiveCanGoBack()
         {
             if (_activeAppletId == null)
@@ -152,14 +146,11 @@ namespace Overlay_Renderer.Methods
                 return;
             }
 
-            // This is in *overlay client coordinates* in your backend
             Vector2 screenMin = ImGui.GetCursorScreenPos();
             Vector2 screenMax = screenMin + drawSize;
 
-            // Reserve the space inside ImGui (for proper layout & hit-test)
             ImGui.InvisibleButton($"##webview_{appletId}", drawSize);
 
-            // Track whether mouse is inside this region (for focus hand-off)
             var io = ImGui.GetIO();
             var mouse = io.MousePos;
 
@@ -170,7 +161,6 @@ namespace Overlay_Renderer.Methods
             if (inside)
                 _mouseOverAnyWebRegion = true;
 
-            // Drive navigation & positioning
             surface.NavigateIfNeeded(url);
             surface.UpdateBounds(screenMin, drawSize);
         }

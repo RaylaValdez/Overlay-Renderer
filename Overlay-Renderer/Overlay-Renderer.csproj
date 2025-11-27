@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!-- Build a library; Starboard references this project -->
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     <RootNamespace>Overlay_Renderer</RootNamespace>
@@ -46,6 +46,7 @@
     <!-- ensure the conflict resolver knows to unify -->
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <StartupObject>Overlay_Renderer.Program</StartupObject>
   </PropertyGroup>
 
 </Project>

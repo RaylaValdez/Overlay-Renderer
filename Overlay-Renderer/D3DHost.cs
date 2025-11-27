@@ -17,20 +17,17 @@ namespace Overlay_Renderer;
 /// </summary>
 public sealed class D3DHost : IDisposable
 {
-    // --- Constants / "magic numbers" ---
-    private const int InitialBackBufferWidth = 1;   // DirectComposition requires a swap chain; we'll resize later
+    private const int InitialBackBufferWidth = 1;  
     private const int InitialBackBufferHeight = 1;
-    private const Format SwapChainFormat = Format.B8G8R8A8_UNorm; // Alpha-capable format compatible with composition
-    private const int SwapChainBufferCount = 2;     // Double-buffering
-    private const int PresentSyncInterval = 1;      // VSync on
-    private static readonly Color4 ClearColor = new(0, 0, 0, 0); // Fully transparent
+    private const Format SwapChainFormat = Format.B8G8R8A8_UNorm;
+    private const int SwapChainBufferCount = 2;   
+    private const int PresentSyncInterval = 1;      
+    private static readonly Color4 ClearColor = new(0, 0, 0, 0); 
 
-    // --- Public device objects (used by the renderer) ---
     public readonly ID3D11Device Device;
     public readonly ID3D11DeviceContext Context;
     public readonly IDXGISwapChain1? SwapChain;
 
-    // --- Private DXGI/DirectComposition plumbing ---
     private readonly IDXGIDevice _dxgiDevice;
     private readonly IDXGIAdapter _dxgiAdapter;
     private readonly IDXGIFactory2? _dxgiFactory;
@@ -48,7 +45,6 @@ public sealed class D3DHost : IDisposable
     {
         _targetHwnd = hwnd;
 
-        // Create a BGRA-capable D3D11 device (BGRA is required for composition).
         D3D11CreateDevice(
             null,
             DriverType.Hardware,
@@ -63,7 +59,6 @@ public sealed class D3DHost : IDisposable
         _dxgiDevice.GetAdapter(out _dxgiAdapter);
         _dxgiAdapter.GetParent(out _dxgiFactory);
 
-        // Create a composition swap chain (premultiplied alpha) — we'll resize it every frame to match the overlay.
         var swapChainDesc = new SwapChainDescription1
         {
             Width = InitialBackBufferWidth,
@@ -84,11 +79,8 @@ public sealed class D3DHost : IDisposable
             SwapChain = _dxgiFactory.CreateSwapChainForComposition(Device, swapChainDesc);
         }
 
-        // Hook the swap chain into DirectComposition so Windows will composite it as a transparent overlay.
         _dcompDevice = DCompositionCreateDevice<IDCompositionDevice>(_dxgiDevice);
 
-        // CreateTargetForHwnd uses an out-parameter in Vortice 3.6.x – store in a local,
-        // then assign to readonly field (allowed in a constructor).
         _dcompDevice.CreateTargetForHwnd(_targetHwnd, true, out IDCompositionTarget dcompTargetLocal);
         _dcompTarget = dcompTargetLocal;
 
@@ -128,12 +120,10 @@ public sealed class D3DHost : IDisposable
         height = Math.Max(1, height);
         if (width == _backBufferWidth && height == _backBufferHeight) return;
 
-        // 0 = preserve buffer count, Format.Unknown = keep current format
         SwapChain!.ResizeBuffers(0, (uint)width, (uint)height, Format.Unknown, 0);
         _backBufferWidth = width;
         _backBufferHeight = height;
 
-        // Commit is cheap; keeps DComp state in sync.
         _dcompDevice.Commit();
     }
 

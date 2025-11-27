@@ -1,11 +1,10 @@
 ﻿namespace Overlay_Renderer.Methods
 {
-    // Overlay_Renderer.Methods namespace (Overlay-Renderer project)
     public readonly struct ControllerButton
     {
-        public readonly Guid DeviceInstanceGuid; // DirectInput device ID
-        public readonly int ButtonIndex;         // 0-based button index
-        public readonly string DeviceName;       // nice to show in UI
+        public readonly Guid DeviceInstanceGuid; 
+        public readonly int ButtonIndex;         
+        public readonly string DeviceName;       
 
         public ControllerButton(Guid guid, int index, string name)
         {
