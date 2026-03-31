@@ -17,8 +17,8 @@ public sealed class ImGuiRendererD3D11 : IDisposable
     private const float BufferGrowthFactor = 1.5f;
     private const uint ConstantBufferBindSlot = 0;
     private const uint ImGuiFontTextureId = 1;
-    private const float SecondaryDeltaTime = 1.0f / 240.0f;
-    private const float MinimumDeltaTime = 1.0f / 120.0f;
+    private const float SecondaryDeltaTime = 1.0f / 120.0f;
+    private const float MinimumDeltaTime = 1.0f / 15.0f;
 
     private readonly ID3D11Device _device;
     private readonly ID3D11DeviceContext _ctx;
@@ -69,7 +69,6 @@ public sealed class ImGuiRendererD3D11 : IDisposable
     {
         var io = ImGui.GetIO();
         io.DisplaySize = new Vector2(displayW, displayH);
-        io.DeltaTime = Math.Max(MinimumDeltaTime, SecondaryDeltaTime);
         ImGui.NewFrame();
     }
 
