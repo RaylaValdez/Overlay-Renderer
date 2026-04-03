@@ -1,4 +1,5 @@
 ﻿using ImGuiNET;
+using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -39,6 +40,8 @@ public sealed class ImGuiRendererD3D11 : IDisposable
     private ID3D11SamplerState? _samplerLinear;
     private ID3D11SamplerState? _samplerPoint;
 
+    private static readonly Stopwatch _stopwatch = new();
+
     private struct TexInfo
     {
         public ID3D11ShaderResourceView SRV;
@@ -55,6 +58,7 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         _device = device;
         _ctx = ctx;
 
+
         ImGui.CreateContext();
         var io = ImGui.GetIO();
         io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
@@ -69,6 +73,19 @@ public sealed class ImGuiRendererD3D11 : IDisposable
     {
         var io = ImGui.GetIO();
         io.DisplaySize = new Vector2(displayW, displayH);
+
+        if (_stopwatch.IsRunning)
+        {
+            io.DeltaTime = (float)_stopwatch.Elapsed.TotalSeconds;
+            _stopwatch.Reset();
+        }
+        else
+        {
+            io.DeltaTime = SecondaryDeltaTime;
+        }
+
+        _stopwatch.Start();
+
         ImGui.NewFrame();
     }
 
