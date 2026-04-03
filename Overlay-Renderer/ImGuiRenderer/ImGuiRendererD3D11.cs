@@ -20,6 +20,7 @@ public sealed class ImGuiRendererD3D11 : IDisposable
     private const uint ImGuiFontTextureId = 1;
     private const float SecondaryDeltaTime = 1.0f / 120.0f;
     private const float MinimumDeltaTime = 1.0f / 15.0f;
+    private const float DesiredFramerate = 60f;
 
     private readonly ID3D11Device _device;
     private readonly ID3D11DeviceContext _ctx;
@@ -67,6 +68,8 @@ public sealed class ImGuiRendererD3D11 : IDisposable
 
         RecreateFontTexture();
         CreateDeviceObjects();
+
+        _stopwatch.Start();
     }
 
     public static void NewFrame(int displayW, int displayH)
@@ -76,7 +79,15 @@ public sealed class ImGuiRendererD3D11 : IDisposable
 
         if (_stopwatch.IsRunning)
         {
+            _stopwatch.Stop();
             io.DeltaTime = (float)_stopwatch.Elapsed.TotalSeconds;
+
+            float desiredDeltaTime = 1f / DesiredFramerate;
+            if (io.DeltaTime < desiredDeltaTime)
+            {
+                float sleepDurMs = (desiredDeltaTime - io.DeltaTime) * 1000;
+                Thread.Sleep((int)sleepDurMs);
+            }
             _stopwatch.Reset();
         }
         else
