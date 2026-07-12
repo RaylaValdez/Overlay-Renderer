@@ -18,8 +18,7 @@ public sealed class ImGuiRendererD3D11 : IDisposable
     private const float BufferGrowthFactor = 1.5f;
     private const uint ConstantBufferBindSlot = 0;
     private const uint ImGuiFontTextureId = 1;
-    private const float SecondaryDeltaTime = 1.0f / 120.0f;
-    private const float MinimumDeltaTime = 1.0f / 15.0f;
+    private const float SecondaryDeltaTime = 120f;
     private const float DesiredFramerate = 60f;
 
     private readonly ID3D11Device _device;
@@ -41,7 +40,9 @@ public sealed class ImGuiRendererD3D11 : IDisposable
     private ID3D11SamplerState? _samplerLinear;
     private ID3D11SamplerState? _samplerPoint;
 
-    private static readonly Stopwatch _stopwatch = new();
+    private ID3D11Buffer? _cb;
+
+    private readonly Stopwatch _stopwatch = new();
 
     private struct TexInfo
     {
@@ -72,7 +73,7 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         _stopwatch.Start();
     }
 
-    public static void NewFrame(int displayW, int displayH)
+    public void NewFrame(int displayW, int displayH)
     {
         var io = ImGui.GetIO();
         io.DisplaySize = new Vector2(displayW, displayH);
@@ -80,14 +81,7 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         if (_stopwatch.IsRunning)
         {
             _stopwatch.Stop();
-            io.DeltaTime = (float)_stopwatch.Elapsed.TotalSeconds;
-
-            float desiredDeltaTime = 1f / DesiredFramerate;
-            if (io.DeltaTime < desiredDeltaTime)
-            {
-                float sleepDurMs = (desiredDeltaTime - io.DeltaTime) * 1000;
-                Thread.Sleep((int)sleepDurMs);
-            }
+            io.DeltaTime = Math.Max((float)_stopwatch.Elapsed.TotalSeconds, 0.0001f);
             _stopwatch.Reset();
         }
         else
@@ -162,11 +156,10 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         _ctx.RSSetState(_rast);
         _ctx.OMSetDepthStencilState(_depth, 0);
 
-        using var cb = _device.CreateBuffer(new BufferDescription((uint)Unsafe.SizeOf<Matrix4x4>(), BindFlags.ConstantBuffer, ResourceUsage.Dynamic, CpuAccessFlags.Write));
-        var m = _ctx.Map(cb, 0, MapMode.WriteDiscard);
+        var m = _ctx.Map(_cb!, 0, MapMode.WriteDiscard);
         unsafe { *(Matrix4x4*)m.DataPointer = proj; }
-        _ctx.Unmap(cb, 0);
-        _ctx.VSSetConstantBuffer(ConstantBufferBindSlot, cb);
+        _ctx.Unmap(_cb, 0);
+        _ctx.VSSetConstantBuffer(ConstantBufferBindSlot, _cb);
 
         int stride = Unsafe.SizeOf<ImDrawVert>();
         _ctx.IASetVertexBuffer(0, _vb, (uint)stride, 0);
@@ -339,6 +332,8 @@ public sealed class ImGuiRendererD3D11 : IDisposable
             MinLOD = 0,
             MaxLOD = float.MaxValue
         });
+
+        _cb = _device.CreateBuffer(new BufferDescription((uint)Unsafe.SizeOf<Matrix4x4>(), BindFlags.ConstantBuffer, ResourceUsage.Dynamic, CpuAccessFlags.Write));
     }
 
     public nint CreateTextureFromFile(string path, out int width, out int height)
@@ -413,6 +408,7 @@ public sealed class ImGuiRendererD3D11 : IDisposable
         foreach (var kv in _textures)
             kv.Value.SRV?.Dispose();
 
+        _cb?.Dispose();
         _depth?.Dispose();
         _rast?.Dispose();
         _blend?.Dispose();

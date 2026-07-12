@@ -5,6 +5,7 @@ CreateWindowExW
 DefWindowProcW
 LoadCursorW
 DestroyWindow
+UnregisterClassW
 PostQuitMessage
 ShowWindow
 UpdateWindow

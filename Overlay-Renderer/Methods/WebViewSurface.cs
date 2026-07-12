@@ -102,10 +102,14 @@ namespace Overlay_Renderer.Methods
 
                 Directory.CreateDirectory(userData);
 
+                var envOptions = new CoreWebView2EnvironmentOptions
+                {
+                    AdditionalBrowserArguments = "--frame-rate=15"
+                };
                 _env = await CoreWebView2Environment.CreateAsync(
                             browserExecutableFolder: null,
                             userDataFolder: userData,
-                            options: null);
+                            options: envOptions);
                 _controller = await _env.CreateCoreWebView2ControllerAsync(_parentHwnd);
                 _core = _controller.CoreWebView2;
 
@@ -151,11 +155,6 @@ namespace Overlay_Renderer.Methods
                 if (_core != null)
                 {
                     _core.IsMuted = !active;
-
-                    string policy = active ? "advance" : "pause";
-                    _core.CallDevToolsProtocolMethodAsync(
-                        "Emulation.setVirtualTimePolicy",
-                        $"{{\"policy\":\"{policy}\"}}");
 
                     if (!active)
                     {

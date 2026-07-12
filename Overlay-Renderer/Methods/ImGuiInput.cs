@@ -259,6 +259,9 @@ namespace Overlay_Renderer.Methods
         private static extern IntPtr GlobalAlloc(uint uFlags, IntPtr dwBytes);
 
         [DllImport("kernel32.dll", SetLastError = false)]
+        private static extern IntPtr GlobalFree(IntPtr hMem);
+
+        [DllImport("kernel32.dll", SetLastError = false)]
         private static extern IntPtr GlobalLock(IntPtr hMem);
 
         [DllImport("kernel32.dll", SetLastError = false)]
@@ -293,10 +296,36 @@ namespace Overlay_Renderer.Methods
             if (!OpenClipboard(IntPtr.Zero))
                 return;
 
-            EmptyClipboard();
-            IntPtr hGlobal = Marshal.StringToHGlobalUni(text);
-            SetClipboardData(CF_UNICODETEXT, hGlobal);
-            CloseClipboard();
+            try
+            {
+                EmptyClipboard();
+
+                int byteCount = (text.Length + 1) * 2;
+                IntPtr hGlobal = GlobalAlloc(GMEM_MOVEABLE, (IntPtr)byteCount);
+                if (hGlobal == IntPtr.Zero)
+                    return;
+
+                IntPtr locked = GlobalLock(hGlobal);
+                if (locked == IntPtr.Zero)
+                {
+                    GlobalFree(hGlobal);
+                    return;
+                }
+
+                Marshal.Copy(text.ToCharArray(), 0, locked, text.Length);
+                Marshal.WriteInt16(locked, text.Length * 2, 0);
+
+                GlobalUnlock(hGlobal);
+
+                if (SetClipboardData(CF_UNICODETEXT, hGlobal) == IntPtr.Zero)
+                {
+                    GlobalFree(hGlobal);
+                }
+            }
+            finally
+            {
+                CloseClipboard();
+            }
         }
 
 

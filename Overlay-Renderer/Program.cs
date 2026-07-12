@@ -54,7 +54,7 @@ namespace Overlay_Renderer
 
             if (!targetHwnd.IsNull && PInvoke.IsWindow(targetHwnd))
             {
-                PInvoke.SetForegroundWindow(targetHwnd);
+                FindProcess.ForceForegroundWindow(hwndIntPtr);
             }
 
             using var d3dHost = new D3DHost(overlay.Hwnd);
@@ -123,12 +123,13 @@ namespace Overlay_Renderer
                 }
 
                 d3dHost.BeginFrame();
-                ImGuiRendererD3D11.NewFrame(overlay.ClientWidth, overlay.ClientHeight);
+                imguiRenderer.NewFrame(overlay.ClientWidth, overlay.ClientHeight);
 
                 ImGuiInput.UpdateMouse(overlay);
                 ImGuiInput.UpdateKeyboard();
 
                 HitTestRegions.BeginFrame();
+                ControllerInput.Update();
                 DrawDemoUi();
                 HitTestRegions.ApplyToOverlay(overlay);
 

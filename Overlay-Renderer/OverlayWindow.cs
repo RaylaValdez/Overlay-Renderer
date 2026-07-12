@@ -36,6 +36,7 @@ public sealed class OverlayWindow : IDisposable
 
     private readonly HWND _ownerHwnd;
     private readonly WNDPROC _wndProcThunk;
+    private readonly ushort _classAtom;
     private RECT[] _hitRegions = Array.Empty<RECT>();
     private readonly List<RECT> _lastRegions = new();
     private static readonly List<(string Path, Point Pt)> _pendingFileDrops = new();
@@ -76,7 +77,7 @@ public sealed class OverlayWindow : IDisposable
                     hInstance = PInvoke.GetModuleHandle((PCWSTR)null),
                     lpszClassName = new PCWSTR(pClass)
                 };
-                PInvoke.RegisterClassEx(wc);
+                _classAtom = PInvoke.RegisterClassEx(wc);
 
                 var ex = WINDOW_EX_STYLE.WS_EX_TOOLWINDOW;
                 var style = WINDOW_STYLE.WS_POPUP;
@@ -308,6 +309,16 @@ public sealed class OverlayWindow : IDisposable
     public void Dispose()
     {
         if (!Hwnd.IsNull)
+        {
             PInvoke.DestroyWindow(Hwnd);
+        }
+
+        unsafe
+        {
+            fixed (char* pClass = WindowClassName)
+            {
+                PInvoke.UnregisterClass(new PCWSTR(pClass), PInvoke.GetModuleHandle((PCWSTR)null));
+            }
+        }
     }
 }

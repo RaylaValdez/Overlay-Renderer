@@ -29,9 +29,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
 
-    <PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" />
-    <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.11.0.20250507" />
-
     <!-- SharpDX is deprecated but kept here if you still use DirectInput -->
     <PackageReference Include="SharpDX" Version="4.2.0" />
     <PackageReference Include="SharpDX.DirectInput" Version="4.2.0" />

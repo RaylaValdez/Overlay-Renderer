@@ -79,6 +79,9 @@ public sealed class D3DHost : IDisposable
             SwapChain = _dxgiFactory.CreateSwapChainForComposition(Device, swapChainDesc);
         }
 
+        if (SwapChain == null)
+            throw new InvalidOperationException("Failed to create DXGI swap chain for composition.");
+
         _dcompDevice = DCompositionCreateDevice<IDCompositionDevice>(_dxgiDevice);
 
         _dcompDevice.CreateTargetForHwnd(_targetHwnd, true, out IDCompositionTarget dcompTargetLocal);
