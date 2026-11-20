@@ -19,6 +19,10 @@
 
     <Company>Triquetra</Company>
     <Authors>RaylaValdez</Authors>
+
+    <Version>0.3.0</Version>
+    <AssemblyVersion>0.3.0.0</AssemblyVersion>
+    <FileVersion>0.3.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
